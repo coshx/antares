@@ -1,46 +1,17 @@
 import json
 import numpy as np
-import pickle
-import redis
+from sklearn.datasets import load_iris
 import tornado.ioloop
 import tornado.web
-import uuid
-
-from sklearn.datasets import load_iris
 
 from CSVHandler import CSVHandler
 from TreeHandler import TreeHandler
 
-redis = redis.Redis(
-    host='localhost',
-    port=6379, 
-    password='')
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.write("Hello, worlds")
 
-<<<<<<< HEAD
-=======
-class CSVHandler(tornado.web.RequestHandler):
-    def post(self):
-        data = self.get_argument("csv")
-        # TODO: Parse data from frontend
-        iris = load_iris()
-        data = np.hstack((iris.data, np.reshape(iris.target, (-1, 1))))
-        train, test = split_train_test(data, .6)
-
-        ids = []
-        response = {}
-        model_types = [("simple", 2), ("complex", 3), ("highly_complex", 4)]
-        for model_type, max_depth in model_types:
-            tree_model = create_tree_model(train, max_depth)
-            tree_object = {"tree": tree_model, "model_type": model_type, "accuracy": 100}
-            tree_id = uuid.uuid1()
-            redis.set(tree_id, pickle.dumps(tree_object))
-            ids.append(tree_id)
-            response[model_type] = str(tree_id)
-        self.write(json.dumps(response))
 
 class TreeHandler(tornado.web.RequestHandler):
     #get tree ID, return complexity level, accuracy against training model
@@ -54,7 +25,7 @@ class TreeHandler(tornado.web.RequestHandler):
         test_data = self.get_argument("data")
         self.write(test_data)
 
->>>>>>> 1a6351404fad141f6a77806b8f10f8fa4ec3b001
+
 def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),

@@ -1,7 +1,10 @@
 import tornado.ioloop
 import tornado.web
+import numpy as np
+from sklearn.datasets import load_iris
 
-#import pdb; pdb.set_trace()
+from models import split_train_test, create_tree_model
+
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.write("Hello, worlds")
@@ -9,7 +12,16 @@ class MainHandler(tornado.web.RequestHandler):
 class CSVHandler(tornado.web.RequestHandler):
     def post(self):
         data = self.get_argument("csv")
-        self.write(data) 
+        # TODO: Parse data from frontend
+        iris = load_iris()
+        data = np.hstack((iris.data, np.reshape(iris.target, (-1, 1))))
+        train, test = split_train_test(data, .6)
+
+        classifiers = []
+        model_types = [("simple", 2), ("complex", 3), ("highly_complex", 4)]
+        for model_type, max_depth in model_types:
+            classifiers.append({model_type: create_tree_model(train, max_depth)})
+        self.write(data)
 
 class TreeHandler(tornado.web.RequestHandler):
     #get tree ID, return complexity level, accuracy against training model
@@ -22,7 +34,7 @@ class TreeHandler(tornado.web.RequestHandler):
     def post(self, slug):
         test_data = self.get_argument("data")
         self.write(test_data)
-        
+
 def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),

@@ -5,9 +5,11 @@ name = "pypi"
 
 [packages]
 scikit-learn = "*"
+tornado = "*"
 
 [dev-packages]
 pytest = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.7"

@@ -29,3 +29,9 @@ def create_tree_model(data, max_depth):
     x, y = data[:,:-1], data[:,-1]
     clf = clf.fit(x, y)
     return clf
+
+def test_split_train_test():
+    data = np.zeros((67, 4))
+    train, test = split_train_test(data)
+    assert np.shape(train) == (40, 4)
+    assert np.shape(test) == (27, 4)

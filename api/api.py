@@ -2,8 +2,17 @@ import tornado.ioloop
 import tornado.web
 import numpy as np
 from sklearn.datasets import load_iris
+import redis
+import uuid
+import pickle
+import json
 
 from models import split_train_test, create_tree_model
+
+redis = redis.Redis(
+    host='localhost',
+    port=6379, 
+    password='')
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -17,11 +26,17 @@ class CSVHandler(tornado.web.RequestHandler):
         data = np.hstack((iris.data, np.reshape(iris.target, (-1, 1))))
         train, test = split_train_test(data, .6)
 
-        classifiers = []
+        ids = []
+        response = {}
         model_types = [("simple", 2), ("complex", 3), ("highly_complex", 4)]
         for model_type, max_depth in model_types:
-            classifiers.append({model_type: create_tree_model(train, max_depth)})
-        self.write(data)
+            tree_model = create_tree_model(train, max_depth)
+            tree_object = {"tree": tree_model, "model_type": model_type, "accuracy": 100}
+            tree_id = uuid.uuid1()
+            redis.set(tree_id, pickle.dumps(tree_object))
+            ids.append(tree_id)
+            response[model_type] = str(tree_id)
+        self.write(json.dumps(response))
 
 class TreeHandler(tornado.web.RequestHandler):
     #get tree ID, return complexity level, accuracy against training model

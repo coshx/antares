@@ -1,18 +1,22 @@
 import React, { Component } from 'react';
+import {Provider} from 'react-redux';
 import { BrowserRouter as Router, Route } from "react-router-dom";
-import Home from './Home'
-import UploadData from './UploadData'
+import Home from './pages/Home'
+import UploadData from './pages/UploadData'
+import store from './store/store';
 
 class App extends Component {
   render() {
     return (
-      <Router>
-        <div className="App">
-          <Route path="/" exact component={Home} />
-          <Route path="/uploadData/" component={UploadData}>
-          </Route>
-        </div>
-      </Router>
+      <Provider store={store}>
+        <Router>
+          <div className="App">
+            <Route path="/" exact component={Home} />
+            <Route path="/uploadData/" component={UploadData}>
+            </Route>
+          </div>
+        </Router>
+      </Provider>
     );
   }
 }

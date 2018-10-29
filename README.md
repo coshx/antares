@@ -24,3 +24,6 @@ Run `yarn` from the `webapp` directory and issue `yarn start` to start the devel
 The API uses [pytest](https://docs.pytest.org/en/latest/) to run tests. From the project's root, run:
 
         pytest
+        
+# API Documentation
+The API documentation can be found [here](https://docs.google.com/document/d/1CQLR_zFgXHEbdwGeiKLSJD_VmxccLGciM70mgwdi3rc/edit)

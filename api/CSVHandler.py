@@ -26,30 +26,7 @@ class CSVHandler(tornado.web.RequestHandler):
             graphviz = sklearn.tree.export_graphviz(tree_model)
 
             graphviz_lines = graphviz.split('\n')
-            for line in graphviz_lines:
-                if (line[0].isdigit()) and ("->" not in line):
-                    node = line.split("\"")[1].split("\\n")
-                    node_id = int(line[0])
-                    gini = ""
-                    samples = ""
-                    values = ""
-                    expression = ""
-                    for attr in node:
-                        if 'gini' in attr:
-                            gini = float(attr.split(" ")[-1])
-                        elif 'samples' in attr:
-                            samples = float(attr.split(" ")[-1])
-                        elif 'value' in attr:
-                            values = attr.split("[")[-1].replace("]", "").replace(" ", "").split(",")
-                            values = list(map(int, values))
-                        else:
-                            expression = attr
-                    
-                    with driver.session() as session:
-                        if expression:
-                            session.write_transaction(create_rule_node, node_id, expression, gini, samples, values)
-                        else:
-                            session.write_transaction(create_leaf_node, node_id, gini, samples, values)
+            create_graph_nodes(graphviz_lines)
 
             # for line in graphviz_lines:
             #     if (line[0].isdigit()) and ("->" in line):
@@ -78,6 +55,32 @@ def test_split_train_test():
     assert np.shape(train) == (40, 4)
     assert np.shape(test) == (27, 4)
 
+def create_graph_nodes(data):
+    for line in data:
+        if (line[0].isdigit()) and ("->" not in line):
+            node = line.split("\"")[1].split("\\n")
+            node_id = int(line[0])
+            gini = ""
+            samples = ""
+            values = ""
+            expression = ""
+            for attr in node:
+                if 'gini' in attr:
+                    gini = float(attr.split(" ")[-1])
+                elif 'samples' in attr:
+                    samples = float(attr.split(" ")[-1])
+                elif 'value' in attr:
+                    values = attr.split("[")[-1].replace("]", "").replace(" ", "").split(",")
+                    values = list(map(int, values))
+                else:
+                    expression = attr
+            
+            with driver.session() as session:
+                if expression:
+                    session.write_transaction(create_rule_node, node_id, expression, gini, samples, values)
+                else:
+                    session.write_transaction(create_leaf_node, node_id, gini, samples, values)
+
 def create_rule_node(tx, identifier, expression, gini, samples, value):
     tx.run("MERGE (a:Rule {identifier: $identifier, expression: $expression, gini: $gini, samples: $samples, value: $value}) ",
            identifier=identifier, expression=expression, gini=gini, samples=samples, value=value)
@@ -86,4 +89,9 @@ def create_leaf_node(tx, identifier, gini, samples, value):
     tx.run("MERGE (a:Answer {identifier: $identifier, gini: $gini, samples: $samples, value: $value}) ",
            identifier=identifier, gini=gini, samples=samples, value=value)
 
-
+def create_relationships(tx, parent_node_identifier, child_node_identifier, relationship):
+    relationship = relationship.upper()
+    tx.run("MATCH (a),(b)"
+           "WHERE a.identifier = $parent_node_identifier AND b.identifier = $child_node_identifier"
+           "CREATE (a)-[r:$relationship]->(b)",
+           parent_node_identifier=parent_node_identifier, child_node_identifier=child_node_identifier, relationship=relationship)

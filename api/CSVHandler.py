@@ -27,13 +27,7 @@ class CSVHandler(tornado.web.RequestHandler):
 
             graphviz_lines = graphviz.split('\n')
             create_graph_nodes(graphviz_lines)
-
-            # for line in graphviz_lines:
-            #     if (line[0].isdigit()) and ("->" in line):
-            #         with driver.session() as session:
-            #             #create relationships
-
-
+            
         # self.write(json.dumps(tree_object))
 
 

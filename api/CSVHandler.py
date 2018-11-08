@@ -1,18 +1,16 @@
 import json
 import numpy as np
 import pickle
-import redis
 from sklearn.datasets import load_iris
+from neo4j.v1 import GraphDatabase
 import sklearn.tree
 import tornado.web
 import uuid
 
-redis = redis.Redis(
-    host='localhost',
-    port=6379,
-    password='')
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password"))
 
 class CSVHandler(tornado.web.RequestHandler):
+
     def post(self):
         data = self.get_argument("csv")
         # TODO: Parse data from frontend
@@ -25,12 +23,41 @@ class CSVHandler(tornado.web.RequestHandler):
         model_types = [("simple", 2), ("complex", 3), ("highly_complex", 4)]
         for model_type, max_depth in model_types:
             tree_model = create_tree_model(train, max_depth)
-            tree_object = {"tree": tree_model, "model_type": model_type, "accuracy": 100}
-            tree_id = uuid.uuid1()
-            redis.set(tree_id, pickle.dumps(tree_object))
-            ids.append(tree_id)
-            response[model_type] = str(tree_id)
-        self.write(json.dumps(response))
+            graphviz = sklearn.tree.export_graphviz(tree_model)
+
+            graphviz_lines = graphviz.split('\n')
+            for line in graphviz_lines:
+                if (line[0].isdigit()) and ("->" not in line):
+                    node = line.split("\"")[1].split("\\n")
+                    node_id = int(line[0])
+                    gini = ""
+                    samples = ""
+                    values = ""
+                    expression = ""
+                    for attr in node:
+                        if 'gini' in attr:
+                            gini = float(attr.split(" ")[-1])
+                        elif 'samples' in attr:
+                            samples = float(attr.split(" ")[-1])
+                        elif 'value' in attr:
+                            values = attr.split("[")[-1].replace("]", "").replace(" ", "").split(",")
+                            values = list(map(int, values))
+                        else:
+                            expression = attr
+                    
+                    with driver.session() as session:
+                        if expression:
+                            session.write_transaction(create_rule_node, node_id, expression, gini, samples, values)
+                        else:
+                            session.write_transaction(create_leaf_node, node_id, gini, samples, values)
+
+            # for line in graphviz_lines:
+            #     if (line[0].isdigit()) and ("->" in line):
+            #         with driver.session() as session:
+            #             #create relationships
+
+
+        # self.write(json.dumps(tree_object))
 
 
 def split_train_test(data, percent_train=0.6):
@@ -50,3 +77,13 @@ def test_split_train_test():
     train, test = split_train_test(data)
     assert np.shape(train) == (40, 4)
     assert np.shape(test) == (27, 4)
+
+def create_rule_node(tx, identifier, expression, gini, samples, value):
+    tx.run("MERGE (a:Rule {identifier: $identifier, expression: $expression, gini: $gini, samples: $samples, value: $value}) ",
+           identifier=identifier, expression=expression, gini=gini, samples=samples, value=value)
+
+def create_leaf_node(tx, identifier, gini, samples, value):
+    tx.run("MERGE (a:Answer {identifier: $identifier, gini: $gini, samples: $samples, value: $value}) ",
+           identifier=identifier, gini=gini, samples=samples, value=value)
+
+

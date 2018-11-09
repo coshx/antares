@@ -28,9 +28,13 @@ jobs:
             - "/usr/local/bin"
             - "/usr/local/lib/python3.7/site-packages"
       - run:
-          name: lint code
+          name: lint code (flake8)
           command: |
             pipenv run flake8 api
+      - run:
+          name: lint code (pylint)
+          command: |
+            pipenv run pylint api
       - run:
           name: run tests
           command: |

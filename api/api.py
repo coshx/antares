@@ -1,6 +1,3 @@
-import json
-import numpy as np
-from sklearn.datasets import load_iris
 import tornado.ioloop
 import tornado.web
 
@@ -18,9 +15,10 @@ def make_app():
         (r"/", MainHandler),
         (r"/csv", CSVHandler),
         (r"/tree/([^/]+)", TreeHandler),
-    ], autoreload = True)
+    ], autoreload=True)
+
 
 if __name__ == "__main__":
-    app = make_app()
-    app.listen(8888)
+    APP = make_app()
+    APP.listen(8888)
     tornado.ioloop.IOLoop.current().start()

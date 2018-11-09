@@ -52,9 +52,6 @@ def create_graph_nodes(data):
         if (line[0].isdigit()) and ("->" not in line):
             node = line.split("\"")[1].split("\\n")
             node_id = int(line[0])
-            gini = ""
-            samples = ""
-            values = ""
             expression = ""
             for attr in node:
                 if 'gini' in attr:

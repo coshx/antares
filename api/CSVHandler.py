@@ -58,13 +58,13 @@ def create_graph_nodes(data):
             expression = ""
             for attr in node:
                 if 'gini' in attr:
-                    gini = float(attr.split(" ")[-1])
+                    gini = float(attr.strip().split(" ")[-1])
                 elif 'samples' in attr:
-                    samples = float(attr.split(" ")[-1])
+                    samples = float(attr.strip().split(" ")[-1])
                 elif 'value' in attr:
-                    values = attr.split(
+                    values = attr.strip().split(
                         "[")[-1].replace("]", "").replace(" ", "").split(",")
-                    values = list(map(int, values))
+                    values = [int(v) for v in values]
                 else:
                     expression = attr
 
@@ -100,7 +100,7 @@ def create_relationships(
         tx,
         parent_node_identifier,
         child_node_identifier,
-        relationship):
+        relationship=None):
     relationship = relationship.upper()
     tx.run(
         "MATCH (a),(b)"

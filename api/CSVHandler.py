@@ -17,13 +17,13 @@ class CSVHandler(tornado.web.RequestHandler):
         data = np.hstack((iris.data, np.reshape(iris.target, (-1, 1))))
         train, test = split_train_test(data, .6)
 
-        model_types = [("simple", 2), ("complex", 3), ("highly_complex", 4)]
-        for model_type, max_depth in model_types:
-            tree_model = create_tree_model(train, max_depth)
-            graphviz = sklearn.tree.export_graphviz(tree_model)
-
-            graphviz_lines = graphviz.split('\n')
-            create_graph_nodes(graphviz_lines)
+        #model_types = [("simple", 2), ("complex", 3), ("highly_complex", 4)]
+        #for model_type, max_depth in model_types:
+        
+        tree_model = create_tree_model(train, 5)
+        graphviz = sklearn.tree.export_graphviz(tree_model)
+        graphviz_lines = graphviz.split('\n')
+        create_graph(graphviz_lines)
 
 
 def split_train_test(data, percent_train=0.6):
@@ -47,32 +47,44 @@ def test_split_train_test():
     assert np.shape(test) == (27, 4)
 
 
-def create_graph_nodes(data):
+def create_graph(data):
     for line in data:
         if (line[0].isdigit()) and ("->" not in line):
-            node = line.split("\"")[1].split("\\n")
-            node_id = int(line[0])
-            expression = ""
-            for attr in node:
-                if 'gini' in attr:
-                    gini = float(attr.strip().split(" ")[-1])
-                elif 'samples' in attr:
-                    samples = float(attr.strip().split(" ")[-1])
-                elif 'value' in attr:
-                    values = attr.strip().split(
-                        "[")[-1].replace("]", "").replace(" ", "").split(",")
-                    values = [int(v) for v in values]
-                else:
-                    expression = attr
+            parse_node(line)
+        elif (line[0].isdigit()) and ("->" in line):
+            parse_relationships(line)
+        
+def parse_node(line):
+    node = line.split("\"")[1].split("\\n")
+    node_id = int(line[0])
+    expression = ""
+    for attr in node:
+        if 'gini' in attr:
+            gini = float(attr.strip().split(" ")[-1])
+        elif 'samples' in attr:
+            samples = float(attr.strip().split(" ")[-1])
+        elif 'value' in attr:
+            values = attr.strip().split(
+                "[")[-1].replace("]", "").replace(" ", "").split(",")
+            values = [int(v) for v in values]
+        else:
+            expression = attr
 
-            with DRIVER.session() as session:
-                if expression:
-                    session.write_transaction(
-                        create_rule_node, node_id, expression, gini, samples, values)
-                else:
-                    session.write_transaction(
-                        create_leaf_node, node_id, gini, samples, values)
+    with DRIVER.session() as session:
+        if expression:
+            session.write_transaction(
+                create_rule_node, node_id, expression, gini, samples, values)
+        else:
+            session.write_transaction(
+                create_leaf_node, node_id, gini, samples, values)
 
+def parse_relationships(line):
+    if (line[0].isdigit()) and ("->" in line):
+        node_ids = [int(s) for s in line.split() if s.isdigit()]
+        print(node_ids)
+        with DRIVER.session() as session:
+            session.write_transaction(
+                create_relationships, node_ids[0], node_ids[1], "IS_TRUE")
 
 def create_rule_node(tx, identifier, expression, gini, samples, value):
     tx.run(
@@ -98,11 +110,13 @@ def create_relationships(
         parent_node_identifier,
         child_node_identifier,
         relationship=None):
+    
     relationship = relationship.upper()
-    tx.run(
-        "MATCH (a),(b)"
-        "WHERE a.identifier = $parent_node_identifier AND b.identifier = $child_node_identifier"
-        "CREATE (a)-[r:$relationship]->(b)",
-        parent_node_identifier=parent_node_identifier,
-        child_node_identifier=child_node_identifier,
-        relationship=relationship)
+    query = '''
+    MATCH (a),(b)
+    WHERE a.identifier = {parent_node_identifier} AND b.identifier = {child_node_identifier}
+    CREATE (a)-[r:{relationship}]->(b)
+    '''.format(parent_node_identifier=parent_node_identifier,
+               child_node_identifier=child_node_identifier,
+               relationship=relationship)
+    tx.run(query)

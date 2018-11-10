@@ -1,4 +1,4 @@
-package com.maxdemarzi.schema;
+package com.antares.schema;
 
 import org.neo4j.graphdb.RelationshipType;
 

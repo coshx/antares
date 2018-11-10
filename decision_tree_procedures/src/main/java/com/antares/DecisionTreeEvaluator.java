@@ -1,6 +1,6 @@
-package com.maxdemarzi;
+package com.antares;
 
-import com.maxdemarzi.schema.Labels;
+import com.antares.schema.Labels;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.traversal.BranchState;
 import org.neo4j.graphdb.traversal.Evaluation;

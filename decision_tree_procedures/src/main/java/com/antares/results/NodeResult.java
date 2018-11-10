@@ -1,4 +1,4 @@
-package com.maxdemarzi.results;
+package com.antares.results;
 
 import org.neo4j.graphdb.Node;
 

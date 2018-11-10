@@ -1,7 +1,7 @@
-package com.maxdemarzi;
+package com.antares;
 
-import com.maxdemarzi.schema.Labels;
-import com.maxdemarzi.schema.RelationshipTypes;
+import com.antares.schema.Labels;
+import com.antares.schema.RelationshipTypes;
 import org.codehaus.janino.ExpressionEvaluator;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.traversal.BranchState;

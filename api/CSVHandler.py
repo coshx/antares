@@ -52,7 +52,16 @@ def create_graph(data):
         if (line[0].isdigit()) and ("->" not in line):
             parse_node(line)
         elif (line[0].isdigit()) and ("->" in line):
-            parse_relationships(line)
+            node_ids = [int(s) for s in line.split() if s.isdigit()]
+            print(node_ids)
+            with DRIVER.session() as session:
+                new_relationship = "IS_TRUE"
+                result = session.write_transaction(
+                    check_if_relationship_exists, node_ids[0], "IS_TRUE")
+                if(result == True):
+                    new_relationship = "IS_FALSE"
+                session.write_transaction(
+                    create_relationships, node_ids[0], node_ids[1], new_relationship)
         
 def parse_node(line):
     node = line.split("\"")[1].split("\\n")
@@ -78,14 +87,6 @@ def parse_node(line):
             session.write_transaction(
                 create_leaf_node, node_id, gini, samples, values)
 
-def parse_relationships(line):
-    if (line[0].isdigit()) and ("->" in line):
-        node_ids = [int(s) for s in line.split() if s.isdigit()]
-        print(node_ids)
-        with DRIVER.session() as session:
-            session.write_transaction(
-                create_relationships, node_ids[0], node_ids[1], "IS_TRUE")
-
 def create_rule_node(tx, identifier, expression, gini, samples, value):
     tx.run(
         "MERGE (a:Rule {identifier: $identifier, expression: $expression, gini: $gini, samples: $samples, value: $value}) ",
@@ -110,7 +111,6 @@ def create_relationships(
         parent_node_identifier,
         child_node_identifier,
         relationship=None):
-    
     relationship = relationship.upper()
     query = '''
     MATCH (a),(b)
@@ -120,3 +120,14 @@ def create_relationships(
                child_node_identifier=child_node_identifier,
                relationship=relationship)
     tx.run(query)
+
+
+def check_if_relationship_exists(tx, parent_node_identifier, relationship):
+    query = ''' 
+    MATCH (a) WHERE a.identifier = {parent_node_identifier} AND (a)-[:{relationship}]->()
+    RETURN a
+    '''.format(parent_node_identifier=parent_node_identifier, relationship=relationship)
+    result = tx.run(query)
+    if result.value():
+        return True
+    return False

@@ -80,7 +80,10 @@ def parse_node(line):
             expression = attr
 
     with DRIVER.session() as session:
-        if expression:
+        if (expression) and (node_id == 0):
+            session.write_transaction(
+                create_root_node, node_id, expression, gini, samples, values)
+        elif expression:
             session.write_transaction(
                 create_rule_node, node_id, expression, gini, samples, values)
         else:
@@ -105,6 +108,14 @@ def create_leaf_node(tx, identifier, gini, samples, value):
         samples=samples,
         value=value)
 
+def create_root_node(tx, identifier, expression, gini, samples, value):
+    tx.run(
+        "MERGE (a:Rule:Root {identifier: $identifier, expression: $expression, gini: $gini, samples: $samples, value: $value}) ",
+        identifier=identifier,
+        expression=expression,
+        gini=gini,
+        samples=samples,
+        value=value)
 
 def create_relationships(
         tx,

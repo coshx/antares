@@ -80,7 +80,7 @@ def parse_node(line):
             expression = attr
 
     with DRIVER.session() as session:
-        if (expression) and (node_id == 0):
+        if expression and node_id == 0:
             session.write_transaction(
                 create_root_node, node_id, expression, gini, samples, values)
         elif expression:

@@ -65,7 +65,7 @@ def create_graph(data):
         
 def parse_node(line):
     node = line.split("\"")[1].split("\\n")
-    node_id = int(line[0])
+    node_id = int(line.split(" ")[0])
     expression = ""
     for attr in node:
         if 'gini' in attr:

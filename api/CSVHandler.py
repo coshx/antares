@@ -3,6 +3,9 @@ from sklearn.datasets import load_iris
 from neo4j.v1 import GraphDatabase
 import sklearn.tree
 import tornado.web
+import pandas as pd
+from io import StringIO
+
 
 DRIVER = GraphDatabase.driver(
     "bolt://localhost:7687", auth=("neo4j", "password"))
@@ -11,7 +14,9 @@ DRIVER = GraphDatabase.driver(
 class CSVHandler(tornado.web.RequestHandler):
 
     def post(self):
-        data = self.get_argument("csv")
+        csv_data = self.request.files["csv"][0]
+        panda_store = pd.read_csv(StringIO(str(csv_data["body"], 'utf-8')))
+        import pdb; pdb.set_trace()
         # TODO: Parse data from frontend
         iris = load_iris()
         data = np.hstack((iris.data, np.reshape(iris.target, (-1, 1))))

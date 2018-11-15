@@ -7,6 +7,7 @@ name = "pypi"
 scikit-learn = "*"
 tornado = "*"
 "neo4j-driver" = "*"
+pandas = "*"
 
 [dev-packages]
 pytest = "*"

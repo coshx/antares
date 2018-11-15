@@ -15,7 +15,6 @@ class UploadData extends Component {
     }
 
     render() {
-        console.log('FU props', this.props);
         return (
             <div className="file-uploader">
                 {this.props.pending &&

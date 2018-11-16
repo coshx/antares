@@ -16,12 +16,11 @@ class CSVHandler(tornado.web.RequestHandler):
     def post(self):
         csv_data = self.request.files["csv"][0]
         panda_store = pd.read_csv(StringIO(str(csv_data["body"], 'utf-8')))
-        import pdb; pdb.set_trace()
         # TODO: Parse data from frontend
         iris = load_iris()
-        data = np.hstack((iris.data, np.reshape(iris.target, (-1, 1))))
+        test_data = np.hstack((iris.data, np.reshape(iris.target, (-1, 1))))
+        data = panda_store.values
         train, test = split_train_test(data, .6)
-
         #model_types = [("simple", 2), ("complex", 3), ("highly_complex", 4)]
         #for model_type, max_depth in model_types:
         

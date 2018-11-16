@@ -80,9 +80,9 @@ def parse_node(line):
             values = attr.strip().split(
                 "[")[-1].replace("]", "").replace(" ", "").split(",")
             values = [int(v) for v in values]
-        else:
+        elif '>' in attr or '<' in attr or '=' in attr:
             expression = attr
-
+    
     with DRIVER.session() as session:
         if expression and node_id == 0:
             session.write_transaction(

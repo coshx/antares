@@ -1,5 +1,4 @@
 import numpy as np
-from sklearn.datasets import load_iris
 from neo4j.v1 import GraphDatabase
 import sklearn.tree
 import tornado.web
@@ -16,14 +15,9 @@ class CSVHandler(tornado.web.RequestHandler):
     def post(self):
         csv_data = self.request.files["csv"][0]
         panda_store = pd.read_csv(StringIO(str(csv_data["body"], 'utf-8')))
-        # TODO: Parse data from frontend
-        iris = load_iris()
-        test_data = np.hstack((iris.data, np.reshape(iris.target, (-1, 1))))
         data = panda_store.values
         train, test = split_train_test(data, .6)
-        #model_types = [("simple", 2), ("complex", 3), ("highly_complex", 4)]
-        #for model_type, max_depth in model_types:
-        
+
         tree_model = create_tree_model(train, 5)
         graphviz = sklearn.tree.export_graphviz(tree_model)
         graphviz_lines = graphviz.split('\n')
@@ -53,20 +47,22 @@ def test_split_train_test():
 
 def create_graph(data):
     for line in data:
-        if (line[0].isdigit()) and ("->" not in line):
+        if line[0].isdigit() and "->" not in line:
             parse_node(line)
-        elif (line[0].isdigit()) and ("->" in line):
+        elif line[0].isdigit() and "->" in line:
             node_ids = [int(s) for s in line.split() if s.isdigit()]
             print(node_ids)
             with DRIVER.session() as session:
                 new_relationship = "IS_TRUE"
                 result = session.write_transaction(
                     check_if_relationship_exists, node_ids[0], "IS_TRUE")
-                if(result == True):
+                if result is True:
                     new_relationship = "IS_FALSE"
                 session.write_transaction(
-                    create_relationships, node_ids[0], node_ids[1], new_relationship)
-        
+                    create_relationships, node_ids[0], node_ids[1],
+                    new_relationship)
+
+
 def parse_node(line):
     node = line.split("\"")[1].split("\\n")
     node_id = int(line.split(" ")[0])
@@ -82,7 +78,7 @@ def parse_node(line):
             values = [int(v) for v in values]
         elif '>' in attr or '<' in attr or '=' in attr:
             expression = attr
-    
+
     with DRIVER.session() as session:
         if expression and node_id == 0:
             session.write_transaction(
@@ -94,9 +90,17 @@ def parse_node(line):
             session.write_transaction(
                 create_leaf_node, node_id, gini, samples, values)
 
+
 def create_rule_node(tx, identifier, expression, gini, samples, value):
+    CREATE_RULE_NODE = """
+    MERGE (a:Rule {identifier: $identifier,
+                   expression: $expression,
+                   gini: $gini,
+                   samples: $samples,
+                   value: $value})
+    """
     tx.run(
-        "MERGE (a:Rule {identifier: $identifier, expression: $expression, gini: $gini, samples: $samples, value: $value}) ",
+        CREATE_RULE_NODE,
         identifier=identifier,
         expression=expression,
         gini=gini,
@@ -105,43 +109,57 @@ def create_rule_node(tx, identifier, expression, gini, samples, value):
 
 
 def create_leaf_node(tx, identifier, gini, samples, value):
+    CREATE_LEAF_NODE = """
+    MERGE (a:Answer {identifier: $identifier,
+                     gini: $gini,
+                     samples: $samples,
+                     value: $value})
+    """
     tx.run(
-        "MERGE (a:Answer {identifier: $identifier, gini: $gini, samples: $samples, value: $value}) ",
+        CREATE_LEAF_NODE,
         identifier=identifier,
         gini=gini,
         samples=samples,
         value=value)
 
+
 def create_root_node(tx, identifier, expression, gini, samples, value):
+    CREATE_ROOT_NODE = """
+    MERGE (a:Rule:Root {identifier: $identifier,
+                        expression: $expression,
+                        gini: $gini,
+                        samples: $samples,
+                        value: $value})
+    """
     tx.run(
-        "MERGE (a:Rule:Root {identifier: $identifier, expression: $expression, gini: $gini, samples: $samples, value: $value}) ",
+        CREATE_ROOT_NODE,
         identifier=identifier,
         expression=expression,
         gini=gini,
         samples=samples,
         value=value)
 
+
 def create_relationships(
-        tx,
-        parent_node_identifier,
-        child_node_identifier,
-        relationship=None):
+        tx, parent_node_id, child_node_id, relationship=None):
     relationship = relationship.upper()
-    query = '''
+    query = """
     MATCH (a),(b)
-    WHERE a.identifier = {parent_node_identifier} AND b.identifier = {child_node_identifier}
+    WHERE a.identifier = {parent_node_id} AND
+          b.identifier = {child_node_id}
     CREATE (a)-[r:{relationship}]->(b)
-    '''.format(parent_node_identifier=parent_node_identifier,
-               child_node_identifier=child_node_identifier,
+    """.format(parent_node_id=parent_node_id,
+               child_node_id=child_node_id,
                relationship=relationship)
     tx.run(query)
 
 
-def check_if_relationship_exists(tx, parent_node_identifier, relationship):
-    query = ''' 
-    MATCH (a) WHERE a.identifier = {parent_node_identifier} AND (a)-[:{relationship}]->()
+def check_if_relationship_exists(tx, parent_node_id, relationship):
+    query = """
+    MATCH (a) WHERE a.identifier = {parent_node_id} AND
+                    (a)-[:{relationship}]->()
     RETURN a
-    '''.format(parent_node_identifier=parent_node_identifier, relationship=relationship)
+    """.format(parent_node_id=parent_node_id, relationship=relationship)
     result = tx.run(query)
     if result.value():
         return True

@@ -1,44 +1,52 @@
-import numpy as np
+"""Handles requests to build decision trees from a CSV."""
+from io import StringIO
 from neo4j.v1 import GraphDatabase
+import numpy as np
+import pandas as pd
 import sklearn.tree
 import tornado.web
-import pandas as pd
-from io import StringIO
 
 
 DRIVER = GraphDatabase.driver(
     "bolt://localhost:7687", auth=("neo4j", "password"))
 
 
+# pylint: disable=W0223
 class CSVHandler(tornado.web.RequestHandler):
+    """Handles all CRUD operations on CSVs."""
 
+    # pylint: disable=W0221
     def post(self):
+        """Parses CSV to dataframe and stores decision tree to Neo4j."""
         csv_data = self.request.files["csv"][0]
         panda_store = pd.read_csv(StringIO(str(csv_data["body"], 'utf-8')))
         data = panda_store.values
-        train, test = split_train_test(data, .6)
+        train, test = split_train_test(data, .6)  # pylint: disable=W0612
 
-        tree_model = create_tree_model(train, 5)
+        tree_model = create_tree_model(train)
         graphviz = sklearn.tree.export_graphviz(tree_model)
         graphviz_lines = graphviz.split('\n')
         create_graph(graphviz_lines)
 
 
 def split_train_test(data, percent_train=0.6):
+    """Splits CSV into train and test sets."""
     split_index = round(np.shape(data)[0] * percent_train)
     np.random.shuffle(data)
     train, test = data[:split_index], data[split_index:]
     return train, test
 
 
-def create_tree_model(data, max_depth):
+def create_tree_model(data):
+    """Creates a decision tree classifier from training data."""
     clf = sklearn.tree.DecisionTreeClassifier()
-    x, y = data[:, :-1], data[:, -1]
+    x, y = data[:, :-1], data[:, -1]  # pylint: disable=C0103
     clf = clf.fit(x, y)
     return clf
 
 
 def test_split_train_test():
+    """Tests train-test set splitting."""
     data = np.zeros((67, 4))
     train, test = split_train_test(data)
     assert np.shape(train) == (40, 4)
@@ -46,6 +54,7 @@ def test_split_train_test():
 
 
 def create_graph(data):
+    """Writes decision tree to Neo4j using graphviz output."""
     for line in data:
         if line[0].isdigit() and "->" not in line:
             parse_node(line)
@@ -64,6 +73,7 @@ def create_graph(data):
 
 
 def parse_node(line):
+    """Parses all graphviz nodes."""
     node = line.split("\"")[1].split("\\n")
     node_id = int(line.split(" ")[0])
     expression = ""
@@ -91,16 +101,18 @@ def parse_node(line):
                 create_leaf_node, node_id, gini, samples, values)
 
 
-def create_rule_node(tx, identifier, expression, gini, samples, value):
-    CREATE_RULE_NODE = """
-    MERGE (a:Rule {identifier: $identifier,
+# pylint: disable=R0913
+def create_rule_node(txn, identifier, expression, gini, samples, value):
+    """Creates a tree node with a classification rule."""
+    query = """
+    merge (a:Rule {identifier: $identifier,
                    expression: $expression,
                    gini: $gini,
                    samples: $samples,
                    value: $value})
     """
-    tx.run(
-        CREATE_RULE_NODE,
+    txn.run(
+        query,
         identifier=identifier,
         expression=expression,
         gini=gini,
@@ -108,31 +120,34 @@ def create_rule_node(tx, identifier, expression, gini, samples, value):
         value=value)
 
 
-def create_leaf_node(tx, identifier, gini, samples, value):
-    CREATE_LEAF_NODE = """
+def create_leaf_node(txn, identifier, gini, samples, value):
+    """Creates a tree node with a classification."""
+    query = """
     MERGE (a:Answer {identifier: $identifier,
                      gini: $gini,
                      samples: $samples,
                      value: $value})
     """
-    tx.run(
-        CREATE_LEAF_NODE,
+    txn.run(
+        query,
         identifier=identifier,
         gini=gini,
         samples=samples,
         value=value)
 
 
-def create_root_node(tx, identifier, expression, gini, samples, value):
-    CREATE_ROOT_NODE = """
+# pylint: disable=R0913
+def create_root_node(txn, identifier, expression, gini, samples, value):
+    """Creates the root node of a tree."""
+    query = """
     MERGE (a:Rule:Root {identifier: $identifier,
                         expression: $expression,
                         gini: $gini,
                         samples: $samples,
                         value: $value})
     """
-    tx.run(
-        CREATE_ROOT_NODE,
+    txn.run(
+        query,
         identifier=identifier,
         expression=expression,
         gini=gini,
@@ -141,7 +156,8 @@ def create_root_node(tx, identifier, expression, gini, samples, value):
 
 
 def create_relationships(
-        tx, parent_node_id, child_node_id, relationship=None):
+        txn, parent_node_id, child_node_id, relationship=None):
+    """Creates a TRUE or FALSE relationship between tree nodes."""
     relationship = relationship.upper()
     query = """
     MATCH (a),(b)
@@ -151,16 +167,17 @@ def create_relationships(
     """.format(parent_node_id=parent_node_id,
                child_node_id=child_node_id,
                relationship=relationship)
-    tx.run(query)
+    txn.run(query)
 
 
-def check_if_relationship_exists(tx, parent_node_id, relationship):
+def check_if_relationship_exists(txn, parent_node_id, relationship):
+    """Checks for existing relationships between nodes."""
     query = """
     MATCH (a) WHERE a.identifier = {parent_node_id} AND
                     (a)-[:{relationship}]->()
     RETURN a
     """.format(parent_node_id=parent_node_id, relationship=relationship)
-    result = tx.run(query)
+    result = txn.run(query)
     if result.value():
         return True
     return False

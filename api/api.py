@@ -5,6 +5,7 @@ import tornado.web
 from csv_handler import CSVHandler
 from tree_handler import TreeHandler
 
+
 # pylint: disable=W0223
 class MainHandler(tornado.web.RequestHandler):
     """Handles smoke tests to localhost:8888/"""

@@ -6,11 +6,14 @@ name = "pypi"
 [packages]
 scikit-learn = "*"
 tornado = "*"
-redis = "*"
+"neo4j-driver" = "*"
+pandas = "*"
 
 [dev-packages]
 pytest = "*"
 pylint = "*"
+"flake8" = "*"
+"autopep8" = "*"
 
 [requires]
 python_version = "3.7"

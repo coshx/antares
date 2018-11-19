@@ -22,7 +22,6 @@ class UploadData extends Component {
 }
 
 const mapStateToProps = (state) => {
-    console.log('MSTP', state);
     return {
         pending: state.uploadReducer.pending
     }
@@ -32,17 +31,18 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onDrop: (acceptedFiles) => {
             let uploadedFile = acceptedFiles[0];
+            console.log('THE FILE', uploadedFile);
             dispatch({
                 type: uploadActions.UPLOAD,
                 file: uploadedFile
             });
             let form = new FormData();
-            form.append('csv', uploadedFile, 'data.csv');
-            console.log('TIME TO CALL THE API WITH THE FILE');
-            // fetch('/csv', {
-            //     method: 'POST',
-            //     body: form
-            // });
+            form.append('csv', uploadedFile);
+            console.log('TIME TO CALL THE API WITH THE FILE', form);
+            fetch('http://localhost:8888/csv', {
+                method: 'POST',
+                body: form
+            });
         }
     }
 }

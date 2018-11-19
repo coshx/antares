@@ -1,26 +1,30 @@
-import json
-import numpy as np
-from sklearn.datasets import load_iris
+"""Runs loopback server for backend."""
 import tornado.ioloop
 import tornado.web
 
-from CSVHandler import CSVHandler
-from TreeHandler import TreeHandler
+from csv_handler import CSVHandler
+from tree_handler import TreeHandler
 
 
+# pylint: disable=W0223
 class MainHandler(tornado.web.RequestHandler):
+    """Handles smoke tests to localhost:8888/"""
+
+    # pylint: disable=W0221
     def get(self):
         self.write("Hello, worlds")
 
 
 def make_app():
+    """Returns application object for Tornado server."""
     return tornado.web.Application([
         (r"/", MainHandler),
         (r"/csv", CSVHandler),
         (r"/tree/([^/]+)", TreeHandler),
-    ], autoreload = True)
+    ], autoreload=True)
+
 
 if __name__ == "__main__":
-    app = make_app()
-    app.listen(8888)
+    APP = make_app()
+    APP.listen(8888)
     tornado.ioloop.IOLoop.current().start()

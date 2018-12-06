@@ -28,8 +28,8 @@ public class Schema {
 
     public Stream<StringResult> generate() throws IOException {
         org.neo4j.graphdb.schema.Schema schema = db.schema();
-        if (!schema.getIndexes(Labels.Tree).iterator().hasNext()) {
-            schema.constraintFor(Labels.Tree)
+        if (!schema.getIndexes(Labels.Root).iterator().hasNext()) {
+            schema.constraintFor(Labels.Root)
                     .assertPropertyIsUnique("id")
                     .create();
         }

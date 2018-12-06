@@ -27,9 +27,9 @@ public class DecisionTreeTraverser {
 
     @Procedure(name = "com.antares.traverse.decision_tree", mode = Mode.READ)
     @Description("CALL com.antares.traverse.decision_tree(tree, facts) - traverse decision tree")
-    public Stream<PathResult> traverseDecisionTree(@Name("tree") String id, @Name("facts") Map<String, String> facts) throws IOException {
+    public Stream<PathResult> traverseDecisionTree(@Name("tree_id") String tree_id, @Name("facts") Map<String, String> facts) throws IOException {
         // Which Decision Tree are we interested in?
-        Node tree = db.findNode(Labels.Tree, "id", id);
+        Node tree = db.findNode(Labels.Root, "tree_id", tree_id);
         if ( tree != null) {
             // Find the paths by traversing this graph and the facts given
             return decisionPath(tree, facts);
@@ -46,11 +46,11 @@ public class DecisionTreeTraverser {
         return myTraversal.traverse(tree).stream().map(PathResult::new);
     }
 
-    @Procedure(name = "com.antares.traverse.decision_tree_two", mode = Mode.READ)
+/*    @Procedure(name = "com.antares.traverse.decision_tree_two", mode = Mode.READ)
     @Description("CALL com.antares.traverse.decision_tree_two(tree, facts) - traverse decision tree")
-    public Stream<PathResult> traverseDecisionTreeTwo(@Name("tree") String id, @Name("facts") Map<String, String> facts) throws IOException {
+    public Stream<PathResult> traverseDecisionTreeTwo(@Name("tree_id") String tree_id, @Name("facts") Map<String, String> facts) throws IOException {
         // Which Decision Tree are we interested in?
-        Node tree = db.findNode(Labels.Tree, "id", id);
+        Node tree = db.findNode(Labels.Root, "tree_id", tree_id);
         if ( tree != null) {
             // Find the paths by traversing this graph and the facts given
             return decisionPathTwo(tree, facts);
@@ -65,5 +65,5 @@ public class DecisionTreeTraverser {
                 .evaluator(decisionTreeEvaluator);
 
         return myTraversal.traverse(tree).stream().map(PathResult::new);
-    }
+    }*/
 }

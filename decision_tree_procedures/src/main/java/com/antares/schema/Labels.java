@@ -3,8 +3,7 @@ package com.antares.schema;
 import org.neo4j.graphdb.Label;
 
 public enum Labels implements Label {
-    Tree,
-    Decision,
+    Root,
     Rule,
     Answer
 }

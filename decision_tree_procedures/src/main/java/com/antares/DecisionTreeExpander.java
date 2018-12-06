@@ -2,6 +2,7 @@ package com.antares;
 
 import com.antares.schema.Labels;
 import com.antares.schema.RelationshipTypes;
+import jdk.nashorn.internal.runtime.regexp.joni.constants.NodeType;
 import org.codehaus.janino.ExpressionEvaluator;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.traversal.BranchState;
@@ -25,10 +26,10 @@ public class DecisionTreeExpander implements PathExpander {
             return Collections.emptyList();
         }
 
-        // If we have Rules to evaluate, go do that.
-        if (path.endNode().hasRelationship(Direction.OUTGOING, RelationshipTypes.HAS)) {
+/*        // If we have Rules to evaluate, go do that.
+        if (path.endNode().hasLabel(Labels.Root)) {
             return path.endNode().getRelationships(Direction.OUTGOING, RelationshipTypes.HAS);
-        }
+        }*/
 
         if (path.endNode().hasLabel(Labels.Rule)) {
             try {

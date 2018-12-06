@@ -1,4 +1,4 @@
-# Decision Tree Store Procedures for Neo4j
+# Decision Tree Stored Procedures for Neo4j
 
 * Substantial credit due to [Max De Marzi's work](https://github.com/maxdemarzi/decision_trees_with_rules).
 * This project requires Neo4j 3.3.x or higher.

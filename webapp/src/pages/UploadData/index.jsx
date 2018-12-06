@@ -13,9 +13,9 @@ class UploadData extends Component {
         console.log('UD PROPS', this.props);
         return (
             <div className="UploadData">
-                { !isAuthenticated &&
+                {/* { !isAuthenticated &&
                 <Registration />
-                }
+                } */}
                 <Navbar></Navbar>
                 <div className="instructions">First, upload your data and we'll make some models for you.</div>
                 <div className="file-uploader-wrapper">

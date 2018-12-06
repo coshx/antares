@@ -5,6 +5,7 @@ import sklearn.tree
 import tornado.web
 import pandas as pd
 from io import StringIO
+import uuid
 
 
 DRIVER = GraphDatabase.driver(
@@ -52,9 +53,10 @@ def test_split_train_test():
 
 
 def create_graph(data):
+    tree_id = str(uuid.uuid4())
     for line in data:
         if (line[0].isdigit()) and ("->" not in line):
-            parse_node(line)
+            parse_node(line, tree_id)
         elif (line[0].isdigit()) and ("->" in line):
             node_ids = [int(s) for s in line.split() if s.isdigit()]
             print(node_ids)
@@ -67,7 +69,7 @@ def create_graph(data):
                 session.write_transaction(
                     create_relationships, node_ids[0], node_ids[1], new_relationship)
         
-def parse_node(line):
+def parse_node(line, tree_id):
     node = line.split("\"")[1].split("\\n")
     node_id = int(line.split(" ")[0])
     expression = ""
@@ -86,36 +88,39 @@ def parse_node(line):
     with DRIVER.session() as session:
         if expression and node_id == 0:
             session.write_transaction(
-                create_root_node, node_id, expression, gini, samples, values)
+                create_root_node, node_id, tree_id, expression, gini, samples, values)
         elif expression:
             session.write_transaction(
-                create_rule_node, node_id, expression, gini, samples, values)
+                create_rule_node, node_id, tree_id, expression, gini, samples, values)
         else:
             session.write_transaction(
-                create_leaf_node, node_id, gini, samples, values)
+                create_leaf_node, node_id, tree_id, gini, samples, values)
 
-def create_rule_node(tx, identifier, expression, gini, samples, value):
+def create_rule_node(tx, identifier, tree_id, expression, gini, samples, value):
     tx.run(
-        "MERGE (a:Rule {identifier: $identifier, expression: $expression, gini: $gini, samples: $samples, value: $value}) ",
+        "MERGE (a:Rule {identifier: $identifier, tree_id: $tree_id, expression: $expression, gini: $gini, samples: $samples, value: $value}) ",
         identifier=identifier,
+        tree_id=tree_id,
         expression=expression,
         gini=gini,
         samples=samples,
         value=value)
 
 
-def create_leaf_node(tx, identifier, gini, samples, value):
+def create_leaf_node(tx, identifier, tree_id, gini, samples, value):
     tx.run(
-        "MERGE (a:Answer {identifier: $identifier, gini: $gini, samples: $samples, value: $value}) ",
+        "MERGE (a:Answer {identifier: $identifier, tree_id: $tree_id, gini: $gini, samples: $samples, value: $value}) ",
         identifier=identifier,
+        tree_id=tree_id,
         gini=gini,
         samples=samples,
         value=value)
 
-def create_root_node(tx, identifier, expression, gini, samples, value):
+def create_root_node(tx, identifier, tree_id, expression, gini, samples, value):
     tx.run(
-        "MERGE (a:Rule:Root {identifier: $identifier, expression: $expression, gini: $gini, samples: $samples, value: $value}) ",
+        "MERGE (a:Rule:Root {identifier: $identifier, tree_id: $tree_id, expression: $expression, gini: $gini, samples: $samples, value: $value}) ",
         identifier=identifier,
+        tree_id=tree_id,
         expression=expression,
         gini=gini,
         samples=samples,

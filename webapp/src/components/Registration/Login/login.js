@@ -71,7 +71,7 @@ const mapDispatchToProps = dispatch => ({
 });
 
 const mapStateToProps = state => ({
-  authentication: state.authentication,
+  authentication: state.authenticationReducer,
   user: state.user
 });
 

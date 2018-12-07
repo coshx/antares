@@ -3,7 +3,7 @@ import {Provider} from 'react-redux';
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import Home from './pages/Home'
 import UploadData from './pages/UploadData'
-import store from './store/store';
+import {store} from './store/store';
 
 class App extends Component {
   render() {

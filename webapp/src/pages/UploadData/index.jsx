@@ -3,14 +3,19 @@ import {connect} from 'react-redux';
 import FileUploader from './../../components/FileUploader';
 import Navbar from './../../components/Navbar';
 import uploadActions from './../../store/actionTypes/upload'
+import Registration from '../../components/Registration/registration'
 import './uploadData.css'
 
 class UploadData extends Component {
 
     render() {
+        const isAuthenticated = this.props.isAuthenticated;
         console.log('UD PROPS', this.props);
         return (
             <div className="UploadData">
+                {/* { !isAuthenticated &&
+                <Registration />
+                } */}
                 <Navbar></Navbar>
                 <div className="instructions">First, upload your data and we'll make some models for you.</div>
                 <div className="file-uploader-wrapper">
@@ -23,6 +28,7 @@ class UploadData extends Component {
 
 const mapStateToProps = (state) => {
     return {
+        isAuthenticated: false,
         pending: state.uploadReducer.pending
     }
 }

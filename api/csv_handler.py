@@ -9,7 +9,7 @@ from neo4j.v1 import GraphDatabase
 
 
 DRIVER = GraphDatabase.driver(
-    "bolt://localhost:7687", auth=("antares", "password"))
+    "bolt://localhost:7687", auth=("neo4j", "password"))
 
 
 # pylint: disable=W0223
@@ -65,11 +65,11 @@ def create_graph(data, java_types):
             with DRIVER.session() as session:
                 new_relationship = "IS_TRUE"
                 result = session.write_transaction(
-                    check_if_relationship_exists, node_ids[0], "IS_TRUE")
+                    check_if_relationship_exists, node_ids[0], tree_id, "IS_TRUE")
                 if result is True:
                     new_relationship = "IS_FALSE"
                 session.write_transaction(
-                    create_relationships, node_ids[0], node_ids[1],
+                    create_relationships, node_ids[0], node_ids[1], tree_id,
                     new_relationship)
 
 
@@ -174,27 +174,31 @@ def create_root_node(
 
 
 def create_relationships(
-        txn, parent_node_id, child_node_id, relationship=None):
+        txn, parent_node_id, child_node_id, tree_id, relationship=None):
     """Creates a TRUE or FALSE relationship between tree nodes."""
     relationship = relationship.upper()
     query = """
     MATCH (a),(b)
     WHERE a.identifier = {parent_node_id} AND
-          b.identifier = {child_node_id}
+          b.identifier = {child_node_id} AND
+          a.tree_id = "{tree_id}" AND
+          b.tree_id = "{tree_id}"
     CREATE (a)-[r:{relationship}]->(b)
     """.format(parent_node_id=parent_node_id,
                child_node_id=child_node_id,
+               tree_id=tree_id,
                relationship=relationship)
     txn.run(query)
 
 
-def check_if_relationship_exists(txn, parent_node_id, relationship):
+def check_if_relationship_exists(txn, parent_node_id, tree_id, relationship):
     """Checks for existing relationships between nodes."""
     query = """
-    MATCH (a) WHERE a.identifier = {parent_node_id} AND
+    MATCH (a) WHERE a.identifier = {parent_node_id} AND 
+                    a.tree_id = "{tree_id}" AND
                     (a)-[:{relationship}]->()
     RETURN a
-    """.format(parent_node_id=parent_node_id, relationship=relationship)
+    """.format(parent_node_id=parent_node_id, relationship=relationship, tree_id=tree_id)
     result = txn.run(query)
     if result.value():
         return True

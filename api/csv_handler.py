@@ -1,11 +1,11 @@
 """Handles requests to build decision trees from a CSV."""
 from io import StringIO
-from neo4j.v1 import GraphDatabase
+import uuid
 import numpy as np
 import pandas as pd
 import sklearn.tree
 import tornado.web
-import uuid
+from neo4j.v1 import GraphDatabase
 
 
 DRIVER = GraphDatabase.driver(
@@ -59,7 +59,7 @@ def create_graph(data):
     tree_id = str(uuid.uuid4())
     for line in data:
         if line[0].isdigit() and "->" not in line:
-            parse_node(line)
+            parse_node(line, tree_id)
         elif line[0].isdigit() and "->" in line:
             node_ids = [int(s) for s in line.split() if s.isdigit()]
             print(node_ids)
@@ -94,17 +94,20 @@ def parse_node(line, tree_id):
     with DRIVER.session() as session:
         if expression and node_id == 0:
             session.write_transaction(
-                create_root_node, node_id, tree_id, expression, gini, samples, values)
+                create_root_node, node_id, tree_id, expression, gini, samples,
+                values)
         elif expression:
             session.write_transaction(
-                create_rule_node, node_id, tree_id, expression, gini, samples, values)
+                create_rule_node, node_id, tree_id, expression, gini, samples,
+                values)
         else:
             session.write_transaction(
                 create_leaf_node, node_id, tree_id, gini, samples, values)
 
 
 # pylint: disable=R0913
-def create_rule_node(txn, identifier, tree_id, expression, gini, samples, value):
+def create_rule_node(
+        txn, identifier, tree_id, expression, gini, samples, value):
     """Creates a tree node with a classification rule."""
     query = """
     merge (a:Rule {identifier: $identifier,
@@ -143,7 +146,8 @@ def create_leaf_node(txn, identifier, tree_id, gini, samples, value):
 
 
 # pylint: disable=R0913
-def create_root_node(txn, identifier, tree_id, expression, gini, samples, value):
+def create_root_node(
+        txn, identifier, tree_id, expression, gini, samples, value):
     """Creates the root node of a tree."""
     query = """
     MERGE (a:Rule:Root {identifier: $identifier,

@@ -6,13 +6,13 @@ export const authenticationReducer = (state = initialAuthenticationState, action
   switch (action.type) {
     case AUTHENTICATE:
       return Object.assign({}, state, {
-        username: action.username,
-        token: action.token
+        email: action.email,
+        password: action.password
       });
     case LOGOUT:
       return Object.assign({}, state, {
-        username: null,
-        token: null
+        email: null,
+        password: null
       });
     default:
       return state;

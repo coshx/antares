@@ -8,7 +8,7 @@ class Login extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: '',
+      email: '',
       password: '',
       error: '',
     };
@@ -19,13 +19,14 @@ class Login extends Component {
   }
 
   handleSubmit = (evt) => {
-
+    evt.preventDefault();
+    this.props.onAuthenticate(this.state.email, this.state.password);
     return this.setState({ error: '' });
   }
 
-  handleUserChange = (evt) => {
+  handleEmailChange = (evt) => {
     this.setState({
-      username: evt.target.value,
+      email: evt.target.value,
     });
   };
 
@@ -45,9 +46,9 @@ class Login extends Component {
             {this.state.error}
           </h3>
         }
-        <FormLabel>User Name</FormLabel>
+        <FormLabel>Email</FormLabel>
         <br />
-        <TextField type="text" data-test="username" value={this.state.username} onChange={this.handleUserChange} style={{marginBottom: '10px'}} />
+        <TextField type="text" data-test="email" value={this.state.email} onChange={this.handleEmailChange} style={{marginBottom: '10px'}} />
         <br />
         <FormLabel>Password</FormLabel>
         <br />
@@ -63,9 +64,9 @@ class Login extends Component {
 }
 
 const mapDispatchToProps = dispatch => ({
-  onAuthenticate: (token, username, email) => {
-    dispatch(authenticationAction(token, username));
-    dispatch(signInUser(email));
+  onAuthenticate: (email, password) => {
+    dispatch(authenticationAction(email, password));
+    //dispatch(signInUser(email));
   }
 });
 

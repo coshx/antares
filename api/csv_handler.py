@@ -1,15 +1,15 @@
 """Handles requests to build decision trees from a CSV."""
 from io import StringIO
 import uuid
-import numpy as np
 import pandas as pd
 import sklearn.tree
+from sklearn.model_selection import train_test_split
 import tornado.web
 from neo4j.v1 import GraphDatabase
 
 
 DRIVER = GraphDatabase.driver(
-    "bolt://localhost:7687", auth=("neo4j", "password"))
+    "bolt://localhost:7687", auth=("antares", "password"))
 
 
 # pylint: disable=W0223
@@ -20,46 +20,45 @@ class CSVHandler(tornado.web.RequestHandler):
     def post(self):
         """Parses CSV to dataframe and stores decision tree to Neo4j."""
         csv_data = self.request.files["csv"][0]
-        panda_store = pd.read_csv(StringIO(str(csv_data["body"], 'utf-8')))
-        data = panda_store.values
-        train, test = split_train_test(data, .6)  # pylint: disable=W0612
+        data = pd.read_csv(
+            StringIO(str(csv_data["body"], 'utf-8')))
+        # pylint: disable=W0612
+        train, test = train_test_split(data, test_size=.6)
 
         tree_model = create_tree_model(train)
         graphviz = sklearn.tree.export_graphviz(tree_model)
         graphviz_lines = graphviz.split('\n')
-        create_graph(graphviz_lines)
+        java_types = map_java_datatypes(train)
+        create_graph(graphviz_lines, java_types)
 
 
-def split_train_test(data, percent_train=0.6):
-    """Splits CSV into train and test sets."""
-    split_index = round(np.shape(data)[0] * percent_train)
-    np.random.shuffle(data)
-    train, test = data[:split_index], data[split_index:]
-    return train, test
+def map_java_datatypes(df):  # pylint: disable=C0103
+    """Maps Python dtypes for all columns in datafrae to Java types."""
+    colnames = df.columns.tolist()  # assumes string header
+    datatype_map = {
+        'u': 'int',
+        'i': 'int',
+        'b': 'boolean',
+        'f': 'double',
+        'O': 'String'}
+    datatypes = [datatype_map[d.kind] for d in df.dtypes.tolist()]
+    return [colnames, datatypes]
 
 
 def create_tree_model(data):
     """Creates a decision tree classifier from training data."""
     clf = sklearn.tree.DecisionTreeClassifier()
-    x, y = data[:, :-1], data[:, -1]  # pylint: disable=C0103
+    x, y = data.iloc[:, :-1], data.iloc[:, -1]  # pylint: disable=C0103
     clf = clf.fit(x, y)
     return clf
 
 
-def test_split_train_test():
-    """Tests train-test set splitting."""
-    data = np.zeros((67, 4))
-    train, test = split_train_test(data)
-    assert np.shape(train) == (40, 4)
-    assert np.shape(test) == (27, 4)
-
-
-def create_graph(data):
+def create_graph(data, java_types):
     """Writes decision tree to Neo4j using graphviz output."""
     tree_id = str(uuid.uuid4())
     for line in data:
         if line[0].isdigit() and "->" not in line:
-            parse_node(line, tree_id)
+            parse_node(line, tree_id, java_types)
         elif line[0].isdigit() and "->" in line:
             node_ids = [int(s) for s in line.split() if s.isdigit()]
             print(node_ids)
@@ -74,7 +73,7 @@ def create_graph(data):
                     new_relationship)
 
 
-def parse_node(line, tree_id):
+def parse_node(line, tree_id, java_types):
     """Parses all graphviz nodes."""
     node = line.split("\"")[1].split("\\n")
     node_id = int(line.split(" ")[0])
@@ -95,7 +94,7 @@ def parse_node(line, tree_id):
         if expression and node_id == 0:
             session.write_transaction(
                 create_root_node, node_id, tree_id, expression, gini, samples,
-                values)
+                java_types, values)
         elif expression:
             session.write_transaction(
                 create_rule_node, node_id, tree_id, expression, gini, samples,
@@ -147,14 +146,19 @@ def create_leaf_node(txn, identifier, tree_id, gini, samples, value):
 
 # pylint: disable=R0913
 def create_root_node(
-        txn, identifier, tree_id, expression, gini, samples, value):
+        txn, identifier, tree_id, expression, gini, samples,
+        java_types, value):
     """Creates the root node of a tree."""
+    parameter_names = ','.join(java_types[0])
+    parameter_types = ','.join(java_types[1])
     query = """
     MERGE (a:Rule:Root {identifier: $identifier,
                         tree_id: $tree_id,
                         expression: $expression,
                         gini: $gini,
                         samples: $samples,
+                        parameter_names: $parameter_names,
+                        parameter_types: $parameter_types,
                         value: $value})
     """
     txn.run(
@@ -164,6 +168,8 @@ def create_root_node(
         expression=expression,
         gini=gini,
         samples=samples,
+        parameter_names=parameter_names,
+        parameter_types=parameter_types,
         value=value)
 
 

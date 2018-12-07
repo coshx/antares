@@ -65,7 +65,7 @@ def create_graph(data, java_types):
             with DRIVER.session() as session:
                 new_relationship = "IS_TRUE"
                 result = session.write_transaction(
-                    check_if_relationship_exists, 
+                    check_if_relationship_exists,
                     node_ids[0], tree_id, "IS_TRUE")
                 if result is True:
                     new_relationship = "IS_FALSE"
@@ -201,7 +201,7 @@ def check_if_relationship_exists(txn, parent_node_id, tree_id, relationship):
           (a)-[:{relationship}]->()
     RETURN a
     """.format(parent_node_id=parent_node_id,
-               relationship=relationship, 
+               relationship=relationship,
                tree_id=tree_id)
     result = txn.run(query)
     if result.value():

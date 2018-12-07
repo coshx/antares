@@ -1,10 +1,11 @@
 """Handles requests to build decision trees from a CSV."""
 from io import StringIO
-from neo4j.v1 import GraphDatabase
+import uuid
 import numpy as np
 import pandas as pd
 import sklearn.tree
 import tornado.web
+from neo4j.v1 import GraphDatabase
 
 
 DRIVER = GraphDatabase.driver(
@@ -55,9 +56,10 @@ def test_split_train_test():
 
 def create_graph(data):
     """Writes decision tree to Neo4j using graphviz output."""
+    tree_id = str(uuid.uuid4())
     for line in data:
         if line[0].isdigit() and "->" not in line:
-            parse_node(line)
+            parse_node(line, tree_id)
         elif line[0].isdigit() and "->" in line:
             node_ids = [int(s) for s in line.split() if s.isdigit()]
             print(node_ids)
@@ -72,7 +74,7 @@ def create_graph(data):
                     new_relationship)
 
 
-def parse_node(line):
+def parse_node(line, tree_id):
     """Parses all graphviz nodes."""
     node = line.split("\"")[1].split("\\n")
     node_id = int(line.split(" ")[0])
@@ -92,20 +94,24 @@ def parse_node(line):
     with DRIVER.session() as session:
         if expression and node_id == 0:
             session.write_transaction(
-                create_root_node, node_id, expression, gini, samples, values)
+                create_root_node, node_id, tree_id, expression, gini, samples,
+                values)
         elif expression:
             session.write_transaction(
-                create_rule_node, node_id, expression, gini, samples, values)
+                create_rule_node, node_id, tree_id, expression, gini, samples,
+                values)
         else:
             session.write_transaction(
-                create_leaf_node, node_id, gini, samples, values)
+                create_leaf_node, node_id, tree_id, gini, samples, values)
 
 
 # pylint: disable=R0913
-def create_rule_node(txn, identifier, expression, gini, samples, value):
+def create_rule_node(
+        txn, identifier, tree_id, expression, gini, samples, value):
     """Creates a tree node with a classification rule."""
     query = """
     merge (a:Rule {identifier: $identifier,
+                   tree_id: $tree_id,
                    expression: $expression,
                    gini: $gini,
                    samples: $samples,
@@ -114,16 +120,18 @@ def create_rule_node(txn, identifier, expression, gini, samples, value):
     txn.run(
         query,
         identifier=identifier,
+        tree_id=tree_id,
         expression=expression,
         gini=gini,
         samples=samples,
         value=value)
 
 
-def create_leaf_node(txn, identifier, gini, samples, value):
+def create_leaf_node(txn, identifier, tree_id, gini, samples, value):
     """Creates a tree node with a classification."""
     query = """
     MERGE (a:Answer {identifier: $identifier,
+                     tree_id: $tree_id,
                      gini: $gini,
                      samples: $samples,
                      value: $value})
@@ -131,16 +139,19 @@ def create_leaf_node(txn, identifier, gini, samples, value):
     txn.run(
         query,
         identifier=identifier,
+        tree_id=tree_id,
         gini=gini,
         samples=samples,
         value=value)
 
 
 # pylint: disable=R0913
-def create_root_node(txn, identifier, expression, gini, samples, value):
+def create_root_node(
+        txn, identifier, tree_id, expression, gini, samples, value):
     """Creates the root node of a tree."""
     query = """
     MERGE (a:Rule:Root {identifier: $identifier,
+                        tree_id: $tree_id,
                         expression: $expression,
                         gini: $gini,
                         samples: $samples,
@@ -149,6 +160,7 @@ def create_root_node(txn, identifier, expression, gini, samples, value):
     txn.run(
         query,
         identifier=identifier,
+        tree_id=tree_id,
         expression=expression,
         gini=gini,
         samples=samples,

@@ -195,8 +195,8 @@ def create_relationships(
 def check_if_relationship_exists(txn, parent_node_id, tree_id, relationship):
     """Checks for existing relationships between nodes."""
     query = """
-    MATCH (a) 
-    WHERE a.identifier = {parent_node_id} AND 
+    MATCH (a)
+    WHERE a.identifier = {parent_node_id} AND
           a.tree_id = "{tree_id}" AND
           (a)-[:{relationship}]->()
     RETURN a

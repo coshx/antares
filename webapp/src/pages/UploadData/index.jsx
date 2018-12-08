@@ -10,12 +10,12 @@ class UploadData extends Component {
 
     render() {
         const isAuthenticated = this.props.isAuthenticated;
-        console.log('UD PROPS', this.props);
+        console.log('UD PROPS', this.props.isAuthenticated);
         return (
             <div className="UploadData">
-                {/* { !isAuthenticated &&
+                { !isAuthenticated &&
                 <Registration />
-                } */}
+                }
                 <Navbar></Navbar>
                 <div className="instructions">First, upload your data and we'll make some models for you.</div>
                 <div className="file-uploader-wrapper">
@@ -28,7 +28,7 @@ class UploadData extends Component {
 
 const mapStateToProps = (state) => {
     return {
-        isAuthenticated: false,
+        isAuthenticated: !!state.authenticationReducer.email,
         pending: state.uploadReducer.pending
     }
 }
@@ -37,7 +37,6 @@ const mapDispatchToProps = (dispatch) => {
     return {
         onDrop: (acceptedFiles) => {
             let uploadedFile = acceptedFiles[0];
-            console.log('THE FILE', uploadedFile);
             dispatch({
                 type: uploadActions.UPLOAD,
                 file: uploadedFile

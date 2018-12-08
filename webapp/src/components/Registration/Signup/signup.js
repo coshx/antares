@@ -6,7 +6,6 @@ class SignUp extends Component {
     super();
     this.state = {
       name: '',
-      username: '',
       password: '',
       email: '',
       phoneNumber: '',
@@ -32,12 +31,6 @@ class SignUp extends Component {
       name: evt.target.value,
     });
   }
-
-  handleUserChange = (evt) => {
-    this.setState({
-      username: evt.target.value,
-    });
-  };
 
   handleEmailChange = (evt) => {
     this.setState({
@@ -73,10 +66,6 @@ class SignUp extends Component {
               {this.state.error}
             </h3>
         }
-        <br />
-        <FormLabel>New User Name</FormLabel>
-        <br />
-        <TextField type="text" data-test="username" value={this.state.username} onChange={this.handleUserChange} style={{marginBottom: '10px'}} />
         <br />
         <FormLabel>Email </FormLabel>
         <br />

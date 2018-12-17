@@ -1,5 +1,6 @@
-import tornado.web
+"""Handles user node creation and retrieval"""
 import json
+import tornado.web
 from neo4j.v1 import GraphDatabase
 
 DRIVER = GraphDatabase.driver(

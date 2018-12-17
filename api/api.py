@@ -4,6 +4,7 @@ import tornado.web
 
 from csv_handler import CSVHandler
 from tree_handler import TreeHandler
+from registration_handler import RegistrationHandler
 
 
 # pylint: disable=W0223
@@ -21,6 +22,7 @@ def make_app():
         (r"/", MainHandler),
         (r"/csv", CSVHandler),
         (r"/tree/([^/]+)", TreeHandler),
+        (r"/registration", RegistrationHandler)
     ], autoreload=True)
 
 

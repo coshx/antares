@@ -27,3 +27,8 @@ The API uses [pytest](https://docs.pytest.org/en/latest/) to run tests. From the
         
 # API Documentation
 The API documentation can be found [here](https://docs.google.com/document/d/1CQLR_zFgXHEbdwGeiKLSJD_VmxccLGciM70mgwdi3rc/edit)
+
+# Linting
+
+## ESLint
+To run ESLint use `node_modules/.bin/eslint . --ext .js`.

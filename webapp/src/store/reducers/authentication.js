@@ -7,17 +7,17 @@ export const authenticationReducer = (state = initialAuthenticationState, action
     case AUTHENTICATE:
       return Object.assign({}, state, {
         email: action.email,
-        password: action.password
+        password: action.password,
       });
     case LOGOUT:
       return Object.assign({}, state, {
         email: null,
-        password: null
+        password: null,
       });
     default:
       return state;
   }
-}
+};
 
 
 export default authenticationReducer;

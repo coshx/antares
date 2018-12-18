@@ -2,7 +2,7 @@ import { SIGN_IN_USER_BEGIN, SIGN_IN_USER_SUCCESS, SIGN_IN_USER_FAILURE } from '
 
 export const initialState = {
   loading: false,
-  error: null
+  error: null,
 };
 
 export const usersReducer = (state = initialState, action) => {
@@ -11,7 +11,7 @@ export const usersReducer = (state = initialState, action) => {
       return {
         ...state,
         loading: true,
-        error: null
+        error: null,
       };
 
     case SIGN_IN_USER_SUCCESS:

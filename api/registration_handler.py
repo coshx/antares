@@ -13,6 +13,11 @@ class RegistrationHandler(tornado.web.RequestHandler):
     """Handles all CRUD operations on Registrations."""
 
     # pylint: disable=W0221
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
+        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+
     def post(self):
         """Checks if user exists if not, creates new user."""
         email = self.get_query_argument('email')
@@ -30,8 +35,12 @@ class RegistrationHandler(tornado.web.RequestHandler):
                 "password": password
             }))
         else:
-            self.write(json.dumps({
-                "error": "A user with that email already exists!"
+            self.set_status(400)
+            self.finish(json.dumps({
+                'error': {
+                    'code': 400,
+                    'message': "A user with that email already exists!",
+                }
             }))
 
     def get(self):
@@ -41,10 +50,24 @@ class RegistrationHandler(tornado.web.RequestHandler):
         with DRIVER.session() as session:
             user = session.write_transaction(
                 get_user, email, password)
-        self.write(json.dumps({
-            "email": user[0].get("email"),
-            "password": user[0].get("password")
-        }))
+        if user:
+            self.write(json.dumps({
+                "email": user[0].get("email"),
+                "password": user[0].get("password")
+            }))
+        else:
+            self.set_status(400)
+            self.finish(json.dumps({
+                'error': {
+                    'code': 400,
+                    'message': "No user with that email and password combination exists!",
+                }
+            }))
+
+    def options(self):
+        # no body
+        self.set_status(204)
+        self.finish()
 
 
 def get_user(txn, email, password):

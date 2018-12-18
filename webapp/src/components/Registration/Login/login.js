@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Button, FormLabel, TextField } from '@material-ui/core/';
 import { authenticationAction } from '../../../store/actions/index';
-import { signInUser } from '../../../store/actions/index';
 
 class Login extends Component {
   constructor(props) {
@@ -20,8 +19,20 @@ class Login extends Component {
 
   handleSubmit = (evt) => {
     evt.preventDefault();
-    this.props.onAuthenticate(this.state.email, this.state.password);
-    return this.setState({ error: '' });
+
+    fetch(`http://localhost:8888/registration?email=${this.state.email}&password=${this.state.password}`, {
+      method: 'GET'
+    }).then(res => {
+      return res.json()
+    }).then(response => {
+      if (!response.error) {
+        this.props.onAuthenticate(response.email, response.password);
+      } else {
+        this.setState({ error: JSON.stringify(response.error.message) });
+      }
+    }).catch(error => {
+       return this.setState({ error: "Something went wrong" });
+    });
   }
 
   handleEmailChange = (evt) => {
@@ -66,7 +77,6 @@ class Login extends Component {
 const mapDispatchToProps = dispatch => ({
   onAuthenticate: (email, password) => {
     dispatch(authenticationAction(email, password));
-    //dispatch(signInUser(email));
   }
 });
 

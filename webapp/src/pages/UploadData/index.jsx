@@ -10,7 +10,7 @@ class UploadData extends Component {
 
     render() {
         const isAuthenticated = this.props.isAuthenticated;
-        console.log('UD PROPS', this.props.isAuthenticated);
+        console.log('Is authenticated', this.props.isAuthenticated);
         return (
             <div className="UploadData">
                 { !isAuthenticated &&

@@ -1,14 +1,15 @@
 import React, { Component } from 'react';
 import { Button, FormLabel, TextField } from '@material-ui/core/';
+import { connect } from 'react-redux';
+import { authenticationAction } from '../../../store/actions/index';
 
 class SignUp extends Component {
   constructor() {
     super();
     this.state = {
-      name: '',
       password: '',
+      passwordConfirmed: false,
       email: '',
-      phoneNumber: '',
     };
   }
 
@@ -18,17 +19,24 @@ class SignUp extends Component {
 
   handleRegistration = (evt) => {
     evt.preventDefault();
-    return this.setState({ error: '' });
-  }
-
-  handleVerification = (evt) => {
-    evt.preventDefault();
-    this.setState({ error: '' });
-  }
-
-  handleNameChange = (evt) => {
-    this.setState({
-      name: evt.target.value,
+    if(this.state.passwordConfirmed === false) {
+      return this.setState({
+        error: 'Passwords do not match!'
+      })
+    }
+    fetch(`http://localhost:8888/registration?email=${this.state.email}&password=${this.state.password}`, {
+      method: 'POST'
+    }).then(res => {
+      return res.json()
+    }).then(response => {
+      if (!response.error) {
+        debugger;
+        this.props.onAuthenticate(response.email, response.password);
+      } else {
+        this.setState({ error: JSON.stringify(response.error.message) });
+      }
+    }).catch(error => {
+       return this.setState({ error: "Something went wrong" });
     });
   }
 
@@ -38,22 +46,22 @@ class SignUp extends Component {
     });
   }
 
-  handlePhoneChange = (evt) => {
-    this.setState({
-      phoneNumber: evt.target.value,
-    });
-  }
-
   handlePassChange = (evt) => {
     this.setState({
       password: evt.target.value,
     });
   }
 
-  handleCodeChange = (evt) => {
-    this.setState({
-      confirmationCode: evt.target.value,
-    });
+  handlePassConfirm = (evt) => {
+    if(this.state.password.localeCompare(evt.target.value) === 0) {
+      this.setState({
+        passwordConfirmed: true
+      })
+    } else {
+      this.setState({
+        passwordConfirmed: false
+      })
+    }
   }
 
   render() {
@@ -75,12 +83,28 @@ class SignUp extends Component {
         <br />
         <TextField type="password" data-test="password" value={this.state.password} onChange={this.handlePassChange} style={{marginBottom: '10px'}} />
         <br />
+        <FormLabel>Confirm Password </FormLabel>
+        <br />
+        <TextField type="password" data-test="password" onChange={this.handlePassConfirm} style={{marginBottom: '10px'}} />
+        <br />
         <Button variant="contained" type="submit" value="Sign up" data-test="submit" color="primary" >
-          Sign up
+          Sign Up
         </Button>
       </form>
     );
   }
 }
 
-export default SignUp;
+
+const mapDispatchToProps = dispatch => ({
+  onAuthenticate: (email, password) => {
+    dispatch(authenticationAction(email, password));
+  }
+});
+
+const mapStateToProps = state => ({
+  authentication: state.authenticationReducer,
+  user: state.user
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(SignUp);

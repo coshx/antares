@@ -60,7 +60,8 @@ class RegistrationHandler(tornado.web.RequestHandler):
             self.finish(json.dumps({
                 'error': {
                     'code': 400,
-                    'message': "No user with that email and password combination exists!",
+                    'message': """No user with that email and password 
+                                combination exists!""",
                 }
             }))
 

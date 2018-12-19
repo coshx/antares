@@ -1,6 +1,7 @@
 """Handles requests to build decision trees from a CSV."""
 from io import StringIO
 import uuid
+import re
 import pandas as pd
 import sklearn.tree
 from sklearn.model_selection import train_test_split
@@ -22,8 +23,9 @@ class CSVHandler(tornado.web.RequestHandler):
         csv_data = self.request.files["csv"][0]
         data = pd.read_csv(
             StringIO(str(csv_data["body"], 'utf-8')))
+        # Remove random seed in production
         # pylint: disable=W0612
-        train, test = train_test_split(data, test_size=.6)
+        train, test = train_test_split(data, test_size=.6, random_state=0)
 
         tree_model = create_tree_model(train)
         graphviz = sklearn.tree.export_graphviz(tree_model)
@@ -33,7 +35,7 @@ class CSVHandler(tornado.web.RequestHandler):
 
 
 def map_java_datatypes(df):  # pylint: disable=C0103
-    """Maps Python dtypes for all columns in datafrae to Java types."""
+    """Maps Python dtypes for all columns in dataframe to Java types."""
     colnames = df.columns.tolist()  # assumes string header
     datatype_map = {
         'u': 'int',
@@ -93,7 +95,9 @@ def parse_node(line, tree_id, java_types):
                 "[")[-1].replace("]", "").replace(" ", "").split(",")
             node_attrs["value"] = [int(v) for v in values]
         elif '>' in attr or '<' in attr or '=' in attr:
-            node_attrs["expression"] = attr
+            index = int(re.search(r"X\[([0-9]+)\]", attr).group(1))
+            node_attrs["expression"] = re.sub(
+                r"X\[[0-9]+\]", java_types[0][index], attr)
 
     with DRIVER.session() as session:
         if node_attrs["expression"]:

@@ -77,57 +77,59 @@ def create_graph(data, java_types):
 def parse_node(line, tree_id, java_types):
     """Parses all graphviz nodes."""
     node = line.split("\"")[1].split("\\n")
-    node_id = int(line.split(" ")[0])
-    expression = ""
+    node_attrs = {
+        "identifier": int(line.split(" ")[0]),
+        "expression": "",
+        "tree_id": tree_id,
+        "parameter_names": ','.join(java_types[0]),
+        "parameter_types": ','.join(java_types[1])}
     for attr in node:
         if 'gini' in attr:
-            gini = float(attr.strip().split(" ")[-1])
+            node_attrs["gini"] = float(attr.strip().split(" ")[-1])
         elif 'samples' in attr:
-            samples = float(attr.strip().split(" ")[-1])
+            node_attrs["samples"] = float(attr.strip().split(" ")[-1])
         elif 'value' in attr:
             values = attr.strip().split(
                 "[")[-1].replace("]", "").replace(" ", "").split(",")
-            values = [int(v) for v in values]
+            node_attrs["value"] = [int(v) for v in values]
         elif '>' in attr or '<' in attr or '=' in attr:
-            expression = attr
+            node_attrs["expression"] = attr
 
     with DRIVER.session() as session:
-        if expression and node_id == 0:
-            session.write_transaction(
-                create_root_node, node_id, tree_id, expression, gini, samples,
-                java_types, values)
-        elif expression:
-            session.write_transaction(
-                create_rule_node, node_id, tree_id, expression, gini, samples,
-                values)
+        if node_attrs["expression"]:
+            session.write_transaction(create_rule_node, node_attrs)
         else:
-            session.write_transaction(
-                create_leaf_node, node_id, tree_id, gini, samples, values)
+            session.write_transaction(create_leaf_node, node_attrs)
 
 
-# pylint: disable=R0913
-def create_rule_node(
-        txn, identifier, tree_id, expression, gini, samples, value):
-    """Creates a tree node with a classification rule."""
-    query = """
-    merge (a:Rule {identifier: $identifier,
-                   tree_id: $tree_id,
-                   expression: $expression,
-                   gini: $gini,
-                   samples: $samples,
-                   value: $value})
-    """
-    txn.run(
-        query,
-        identifier=identifier,
-        tree_id=tree_id,
-        expression=expression,
-        gini=gini,
-        samples=samples,
-        value=value)
+def create_rule_node(txn, node_attrs):
+    """Creates a non-leaf node with a classification rule."""
+    if node_attrs["identifier"] == 0:
+        query = """
+        MERGE (a:Rule:Root {identifier: $identifier,
+                            tree_id: $tree_id,
+                            expression: $expression,
+                            gini: $gini,
+                            samples: $samples,
+                            parameter_names: $parameter_names,
+                            parameter_types: $parameter_types,
+                            value: $value})
+        """
+    else:
+        query = """
+        MERGE (a:Rule {identifier: $identifier,
+                       tree_id: $tree_id,
+                       expression: $expression,
+                       gini: $gini,
+                       samples: $samples,
+                       parameter_names: $parameter_names,
+                       parameter_types: $parameter_types,
+                       value: $value})
+        """
+    txn.run(query, node_attrs)
 
 
-def create_leaf_node(txn, identifier, tree_id, gini, samples, value):
+def create_leaf_node(txn, node_attrs):
     """Creates a tree node with a classification."""
     query = """
     MERGE (a:Answer {identifier: $identifier,
@@ -136,42 +138,7 @@ def create_leaf_node(txn, identifier, tree_id, gini, samples, value):
                      samples: $samples,
                      value: $value})
     """
-    txn.run(
-        query,
-        identifier=identifier,
-        tree_id=tree_id,
-        gini=gini,
-        samples=samples,
-        value=value)
-
-
-# pylint: disable=R0913
-def create_root_node(
-        txn, identifier, tree_id, expression, gini, samples,
-        java_types, value):
-    """Creates the root node of a tree."""
-    parameter_names = ','.join(java_types[0])
-    parameter_types = ','.join(java_types[1])
-    query = """
-    MERGE (a:Rule:Root {identifier: $identifier,
-                        tree_id: $tree_id,
-                        expression: $expression,
-                        gini: $gini,
-                        samples: $samples,
-                        parameter_names: $parameter_names,
-                        parameter_types: $parameter_types,
-                        value: $value})
-    """
-    txn.run(
-        query,
-        identifier=identifier,
-        tree_id=tree_id,
-        expression=expression,
-        gini=gini,
-        samples=samples,
-        parameter_names=parameter_names,
-        parameter_types=parameter_types,
-        value=value)
+    txn.run(query, node_attrs)
 
 
 def create_relationships(

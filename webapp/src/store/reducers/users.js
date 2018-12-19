@@ -5,7 +5,7 @@ export const initialState = {
   error: null,
 };
 
-export const usersReducer = (state = initialState, action) => {
+const usersReducer = (state = initialState, action) => {
   switch (action.type) {
     case SIGN_IN_USER_BEGIN:
       return {
@@ -32,4 +32,4 @@ export const usersReducer = (state = initialState, action) => {
   }
 };
 
-export default usersReducer;
+export { usersReducer };

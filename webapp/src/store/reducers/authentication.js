@@ -2,7 +2,7 @@ import { AUTHENTICATE, LOGOUT } from '../actionTypes/ActionTypes';
 
 export const initialAuthenticationState = {};
 
-export const authenticationReducer = (state = initialAuthenticationState, action) => {
+const authenticationReducer = (state = initialAuthenticationState, action) => {
   switch (action.type) {
     case AUTHENTICATE:
       return Object.assign({}, state, {
@@ -20,4 +20,4 @@ export const authenticationReducer = (state = initialAuthenticationState, action
 };
 
 
-export default authenticationReducer;
+export { authenticationReducer };

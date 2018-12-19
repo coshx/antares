@@ -28,7 +28,8 @@ class RegistrationHandler(tornado.web.RequestHandler):
             user_exists = session.write_transaction(
                 get_user, email)
             if not user_exists:
-                hashed_pw = hashpw(password.encode('utf-8'), gensalt()).decode('utf-8')
+                utf8_pw = password.encode('utf-8')
+                hashed_pw = hashpw(utf8_pw, gensalt()).decode('utf-8')
                 new_user = session.write_transaction(
                     create_user, email, hashed_pw)
         if new_user != "":
@@ -54,17 +55,20 @@ class RegistrationHandler(tornado.web.RequestHandler):
             user = session.write_transaction(
                 get_user, email)
             hashed_pw = user[0].get("password")
+
+        hashedpw_utf8 = hashed_pw.encode('utf-8')
+        pw_utf8 = password.encode('utf-8')
         if not user:
             error_message = """No user with that email and password
                                 combination exists!"""
-        elif hashpw(password.encode('utf-8'), hashed_pw.encode('utf-8')) == hashed_pw.encode('utf-8'):
+        elif hashpw(pw_utf8, hashedpw_utf8) == hashedpw_utf8:
             return self.finish(json.dumps({
                 "email": user[0].get("email"),
                 "password": hashed_pw
             }))
         else:
             error_message = "Incorrect password"
-        
+
         self.set_status(400)
         self.finish(json.dumps({
             'error': {

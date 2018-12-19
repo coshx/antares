@@ -70,7 +70,7 @@ class RegistrationHandler(tornado.web.RequestHandler):
             error_message = "Incorrect password"
 
         self.set_status(400)
-        self.finish(json.dumps({
+        return self.finish(json.dumps({
             'error': {
                 'code': 400,
                 'message': error_message,

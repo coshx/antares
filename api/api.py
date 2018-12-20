@@ -11,6 +11,7 @@ from registration_handler import RegistrationHandler
 # pylint: disable=W0223
 class BaseHandler(tornado.web.RequestHandler):
     """Sets session token to track current user"""
+
     def get_current_user(self):
         return self.get_secure_cookie("user")
 
@@ -18,6 +19,7 @@ class BaseHandler(tornado.web.RequestHandler):
 class MainHandler(BaseHandler):
     """Handles smoke tests to localhost:8888/"""
     # pylint: disable=W0221
+
     def get(self):
         self.write("Hello, worlds")
 
@@ -35,8 +37,8 @@ def make_app():
         (r"/tree/([^/]+)", TreeHandler),
         (r"/registration", RegistrationHandler)
     ], autoreload=True,
-    cookie_secret='12345', 
-    jwt_secret=jwt_secret)
+        cookie_secret=cookie_secret,
+        jwt_secret=jwt_secret)
 
 
 if __name__ == "__main__":

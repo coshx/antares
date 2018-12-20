@@ -34,4 +34,4 @@ The API documentation can be found [here](https://docs.google.com/document/d/1CQ
 # Linting
 
 ## ESLint
-To run ESLint use `node_modules/.bin/eslint . --ext .js`.
+To run ESLint use `yarn lint`.

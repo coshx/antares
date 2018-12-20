@@ -19,20 +19,16 @@ class Login extends Component {
 
   handleSubmit = (evt) => {
     evt.preventDefault();
-
-    fetch(`http://localhost:8888/registration?email=${this.state.email}&password=${this.state.password}`, {
-      method: 'GET'
-    }).then(res => {
-      return res.json()
-    }).then(response => {
+    const { email, password } = this.state;
+    fetch(`http://localhost:8888/registration?email=${email}&password=${password}`, {
+      method: 'GET',
+    }).then(res => res.json()).then((response) => {
       if (!response.error) {
-        this.props.onAuthenticate(response.email, response.session_token);
+        this.props.onAuthenticate(response.email, response.token);
       } else {
         this.setState({ error: JSON.stringify(response.error.message) });
       }
-    }).catch(error => {
-       return this.setState({ error: "Something went wrong" });
-    });
+    }).catch(error => this.setState({ error: 'Something went wrong' }));
   }
 
   handleEmailChange = (evt) => {
@@ -49,21 +45,23 @@ class Login extends Component {
 
   render() {
     return (
-      <form onSubmit={this.handleSubmit} style={{padding: '20px'}}>
+      <form onSubmit={this.handleSubmit} style={{ padding: '20px' }}>
         {
-          this.state.error &&
+          this.state.error
+          && (
           <h3 data-test="error">
             <button onClick={this.dismissError}>✖</button>
             {this.state.error}
           </h3>
+          )
         }
         <FormLabel>Email</FormLabel>
         <br />
-        <TextField type="text" data-test="email" value={this.state.email} onChange={this.handleEmailChange} style={{marginBottom: '10px'}} />
+        <TextField type="text" data-test="email" value={this.state.email} onChange={this.handleEmailChange} style={{ marginBottom: '10px' }} />
         <br />
         <FormLabel>Password</FormLabel>
         <br />
-        <TextField type="password" data-test="password" value={this.state.password} onChange={this.handlePassChange} style={{marginBottom: '10px'}} />
+        <TextField type="password" data-test="password" value={this.state.password} onChange={this.handlePassChange} style={{ marginBottom: '10px' }} />
         <br />
 
         <Button variant="contained" type="submit" value="Log In" data-test="submit" color="primary">
@@ -77,12 +75,12 @@ class Login extends Component {
 const mapDispatchToProps = dispatch => ({
   onAuthenticate: (email, token) => {
     dispatch(authenticationAction(email, token));
-  }
+  },
 });
 
 const mapStateToProps = state => ({
   authentication: state.authenticationReducer,
-  user: state.user
+  user: state.user,
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Login);

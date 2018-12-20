@@ -19,24 +19,20 @@ class SignUp extends Component {
 
   handleRegistration = (evt) => {
     evt.preventDefault();
-    if(this.state.passwordConfirmed === false) {
+    if (this.state.passwordConfirmed === false) {
       return this.setState({
-        error: 'Passwords do not match!'
-      })
+        error: 'Passwords do not match!',
+      });
     }
     fetch(`http://localhost:8888/registration?email=${this.state.email}&password=${this.state.password}`, {
-      method: 'POST'
-    }).then(res => {
-      return res.json()
-    }).then(response => {
+      method: 'POST',
+    }).then(res => res.json()).then((response) => {
       if (!response.error) {
         this.props.onAuthenticate(response.email, response.session_token);
       } else {
         this.setState({ error: JSON.stringify(response.error.message) });
       }
-    }).catch(error => {
-       return this.setState({ error: "Something went wrong" });
-    });
+    }).catch(error => this.setState({ error: 'Something went wrong' }));
   }
 
   handleEmailChange = (evt) => {
@@ -52,41 +48,43 @@ class SignUp extends Component {
   }
 
   handlePassConfirm = (evt) => {
-    if(this.state.password.localeCompare(evt.target.value) === 0) {
+    if (this.state.password.localeCompare(evt.target.value) === 0) {
       this.setState({
-        passwordConfirmed: true
-      })
+        passwordConfirmed: true,
+      });
     } else {
       this.setState({
-        passwordConfirmed: false
-      })
+        passwordConfirmed: false,
+      });
     }
   }
 
   render() {
     return (
-      <form onSubmit={this.handleRegistration} style={{padding: '20px'}}>
+      <form onSubmit={this.handleRegistration} style={{ padding: '20px' }}>
         {
-          this.state.error &&
+          this.state.error
+            && (
             <h3 data-test="error">
               <button onClick={this.dismissError}>✖</button>
               {this.state.error}
             </h3>
+            )
         }
         <br />
         <FormLabel>Email </FormLabel>
         <br />
-        <TextField type="text" data-test="email" value={this.state.email} onChange={this.handleEmailChange} style={{marginBottom: '10px'}} />
+        <TextField type="text" data-test="email" value={this.state.email} onChange={this.handleEmailChange} style={{ marginBottom: '10px' }} />
         <br />
         <FormLabel>New Password </FormLabel>
         <br />
-        <TextField type="password" data-test="password" value={this.state.password} onChange={this.handlePassChange} style={{marginBottom: '10px'}} />
+        <TextField type="password" data-test="password" value={this.state.password} onChange={this.handlePassChange} style={{ marginBottom: '10px' }} />
         <br />
         <FormLabel>Confirm Password </FormLabel>
         <br />
-        <TextField type="password" data-test="password" onChange={this.handlePassConfirm} style={{marginBottom: '10px'}} />
+        <TextField type="password" data-test="password" onChange={this.handlePassConfirm} style={{ marginBottom: '10px' }} />
         <br />
-        <Button variant="contained" type="submit" value="Sign up" data-test="submit" color="primary" >
+        <Button variant="contained" type="submit" value="Sign up" data-test="submit" color="primary">
           Sign Up
         </Button>
       </form>
@@ -98,12 +96,12 @@ class SignUp extends Component {
 const mapDispatchToProps = dispatch => ({
   onAuthenticate: (email, token) => {
     dispatch(authenticationAction(email, token));
-  }
+  },
 });
 
 const mapStateToProps = state => ({
   authentication: state.authenticationReducer,
-  user: state.user
+  user: state.user,
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(SignUp);

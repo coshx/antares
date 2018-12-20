@@ -17,10 +17,19 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "node_modules/.bin/eslint . --ext .js --fix . --ext .jsx --fix"
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": "airbnb",
+    "parser": "babel-eslint",
+    "env": {
+      "browser": true,
+      "node": true
+    },
+    "rules": {
+      "no-console": "off"
+    }
   },
   "browserslist": [
     ">0.2%",

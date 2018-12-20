@@ -31,7 +31,7 @@ class SignUp extends Component {
     }).then(response => {
       if (!response.error) {
         debugger;
-        this.props.onAuthenticate(response.email, response.token);
+        this.props.onAuthenticate(response.email, response.session_token);
       } else {
         this.setState({ error: JSON.stringify(response.error.message) });
       }

@@ -12,6 +12,7 @@ class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
         return self.get_secure_cookie("user")
 
+
 class MainHandler(BaseHandler):
     """Handles smoke tests to localhost:8888/"""
     # pylint: disable=W0221

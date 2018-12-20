@@ -65,11 +65,14 @@ class RegistrationHandler(tornado.web.RequestHandler):
             error_message = """No user with that email and password
                                 combination exists!"""
         elif hashpw(pw_utf8, hashedpw_utf8) == hashedpw_utf8:
-            encoded_email = jwt.encode({'email': email}, 'secret', algorithm='HS256')
+            encoded_email = jwt.encode({'email': email}, 
+                                        'secret',
+                                        algorithm='HS256')
             self.set_secure_cookie("user", encoded_email)
+            session_token = self.get_secure_cookie("user").decode('utf-8')
             return self.finish(json.dumps({
                 "email": user[0].get("email"),
-                "session_token": self.get_secure_cookie("user").decode('utf-8')
+                "session_token": session_token
             }))
         else:
             error_message = "Incorrect password"

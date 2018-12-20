@@ -26,7 +26,7 @@ class Login extends Component {
       return res.json()
     }).then(response => {
       if (!response.error) {
-        this.props.onAuthenticate(response.email, response.token);
+        this.props.onAuthenticate(response.email, response.session_token);
       } else {
         this.setState({ error: JSON.stringify(response.error.message) });
       }

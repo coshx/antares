@@ -34,11 +34,13 @@ class RegistrationHandler(tornado.web.RequestHandler):
                 new_user = session.write_transaction(
                     create_user, email, hashed_pw)
         if new_user != "":
-            token = jwt.encode({'email': email}, 'secret', algorithm='HS256')
-            self.set_secure_cookie("user", token)
+            session_token = jwt.encode({'email': email},
+                                       self.settings['jwt_secret'],
+                                       algorithm='HS256')
+            self.set_secure_cookie("user", session_token)
             self.write(json.dumps({
                 "email": email,
-                "session_token": self.get_secure_cookie("user").decode('utf-8')
+                "session_token": session_token.decode('utf-8')
             }))
         else:
             self.set_status(400)
@@ -65,14 +67,14 @@ class RegistrationHandler(tornado.web.RequestHandler):
             error_message = """No user with that email and password
                                 combination exists!"""
         elif hashpw(pw_utf8, hashedpw_utf8) == hashedpw_utf8:
-            encoded_email = jwt.encode({'email': email},
-                                       'secret',
+            # do we check if a cookie exists? If so, what do we do? Overwrite?
+            session_token = jwt.encode({'email': email},
+                                       self.settings['jwt_secret'],
                                        algorithm='HS256')
-            self.set_secure_cookie("user", encoded_email)
-            session_token = self.get_secure_cookie("user").decode('utf-8')
+            self.set_secure_cookie("user", session_token)
             return self.finish(json.dumps({
                 "email": user[0].get("email"),
-                "session_token": session_token
+                "session_token": session_token.decode('utf-8')
             }))
         else:
             error_message = "Incorrect password"

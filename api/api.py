@@ -1,6 +1,7 @@
 """Runs loopback server for backend."""
 import tornado.ioloop
 import tornado.web
+import configparser
 
 from csv_handler import CSVHandler
 from tree_handler import TreeHandler
@@ -23,12 +24,19 @@ class MainHandler(BaseHandler):
 
 def make_app():
     """Returns application object for Tornado server."""
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    cookie_secret = config['DEFAULT']['COOKIE_SECRET_KEY']
+    jwt_secret = config['DEFAULT']['JWT_SECRET_KEY']
+    # import pdb; pdb.set_trace()
     return tornado.web.Application([
         (r"/", MainHandler),
         (r"/csv", CSVHandler),
         (r"/tree/([^/]+)", TreeHandler),
         (r"/registration", RegistrationHandler)
-    ], autoreload=True, cookie_secret="123457788")
+    ], autoreload=True,
+    cookie_secret='12345', 
+    jwt_secret=jwt_secret)
 
 
 if __name__ == "__main__":

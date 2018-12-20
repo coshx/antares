@@ -1,9 +1,9 @@
 import * as ActionTypes from '../actionTypes/ActionTypes';
 
-export const authenticationAction = (email, password) => ({
+export const authenticationAction = (email, token) => ({
   type: ActionTypes.AUTHENTICATE,
   email,
-  password,
+  token,
 });
 
 export const logoutAction = () => ({

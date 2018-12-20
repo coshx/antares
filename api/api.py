@@ -8,9 +8,12 @@ from registration_handler import RegistrationHandler
 
 
 # pylint: disable=W0223
-class MainHandler(tornado.web.RequestHandler):
-    """Handles smoke tests to localhost:8888/"""
+class BaseHandler(tornado.web.RequestHandler):
+    def get_current_user(self):
+        return self.get_secure_cookie("user")
 
+class MainHandler(BaseHandler):
+    """Handles smoke tests to localhost:8888/"""
     # pylint: disable=W0221
     def get(self):
         self.write("Hello, worlds")
@@ -23,7 +26,7 @@ def make_app():
         (r"/csv", CSVHandler),
         (r"/tree/([^/]+)", TreeHandler),
         (r"/registration", RegistrationHandler)
-    ], autoreload=True)
+    ], autoreload=True, cookie_secret="123457788")
 
 
 if __name__ == "__main__":

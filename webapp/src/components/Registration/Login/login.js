@@ -26,7 +26,7 @@ class Login extends Component {
       return res.json()
     }).then(response => {
       if (!response.error) {
-        this.props.onAuthenticate(response.email, response.password);
+        this.props.onAuthenticate(response.email, response.token);
       } else {
         this.setState({ error: JSON.stringify(response.error.message) });
       }
@@ -75,8 +75,8 @@ class Login extends Component {
 }
 
 const mapDispatchToProps = dispatch => ({
-  onAuthenticate: (email, password) => {
-    dispatch(authenticationAction(email, password));
+  onAuthenticate: (email, token) => {
+    dispatch(authenticationAction(email, token));
   }
 });
 

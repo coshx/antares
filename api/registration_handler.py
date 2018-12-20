@@ -1,5 +1,6 @@
 """Handles user node creation and retrieval"""
 import json
+import jwt
 import tornado.web
 from neo4j.v1 import GraphDatabase
 from bcrypt import hashpw, gensalt
@@ -33,9 +34,11 @@ class RegistrationHandler(tornado.web.RequestHandler):
                 new_user = session.write_transaction(
                     create_user, email, hashed_pw)
         if new_user != "":
+            encoded_email = jwt.encode({'email': email}, 'secret', algorithm='HS256')
+            self.set_secure_cookie("user", encoded_email)
             self.write(json.dumps({
                 "email": email,
-                "password": hashed_pw
+                "session_token": self.get_secure_cookie("user").decode('utf-8')
             }))
         else:
             self.set_status(400)
@@ -62,9 +65,11 @@ class RegistrationHandler(tornado.web.RequestHandler):
             error_message = """No user with that email and password
                                 combination exists!"""
         elif hashpw(pw_utf8, hashedpw_utf8) == hashedpw_utf8:
+            encoded_email = jwt.encode({'email': email}, 'secret', algorithm='HS256')
+            self.set_secure_cookie("user", encoded_email)
             return self.finish(json.dumps({
                 "email": user[0].get("email"),
-                "password": hashed_pw
+                "session_token": self.get_secure_cookie("user").decode('utf-8')
             }))
         else:
             error_message = "Incorrect password"

@@ -31,7 +31,7 @@ class SignUp extends Component {
     }).then(response => {
       if (!response.error) {
         debugger;
-        this.props.onAuthenticate(response.email, response.password);
+        this.props.onAuthenticate(response.email, response.token);
       } else {
         this.setState({ error: JSON.stringify(response.error.message) });
       }
@@ -97,8 +97,8 @@ class SignUp extends Component {
 
 
 const mapDispatchToProps = dispatch => ({
-  onAuthenticate: (email, password) => {
-    dispatch(authenticationAction(email, password));
+  onAuthenticate: (email, token) => {
+    dispatch(authenticationAction(email, token));
   }
 });
 

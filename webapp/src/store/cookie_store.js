@@ -1,21 +1,21 @@
 export const loadState = () => {
-    try {
-      const serializedState = localStorage.getItem('state');
-      if (serializedState === null) {
-        return undefined;
-      }
-      return JSON.parse(serializedState);
-    } catch (error) {
-      console.log('No cookies for you!!', error);
+  try {
+    const serializedState = localStorage.getItem('state');
+    if (serializedState === null) {
       return undefined;
     }
-  };
-  
+    return JSON.parse(serializedState);
+  } catch (error) {
+    console.log('No cookies for you!!', error);
+    return undefined;
+  }
+};
+
 export const saveState = (state) => {
-try {
+  try {
     const serializedState = JSON.stringify(state);
     localStorage.setItem('state', serializedState);
-} catch (error) {
+  } catch (error) {
     console.log("We couldn't save your cookies", error);
-}
+  }
 };

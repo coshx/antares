@@ -8,6 +8,8 @@ scikit-learn = "*"
 tornado = "*"
 "neo4j-driver" = "*"
 pandas = "*"
+bcrypt = "*"
+pyjwt = "*"
 
 [dev-packages]
 pytest = "*"

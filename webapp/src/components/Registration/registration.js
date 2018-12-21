@@ -12,7 +12,7 @@ class Registration extends Component {
   }
 
   switchSignUpState = () => {
-    this.setState({isSigningUp: !this.state.isSigningUp});
+    this.setState({ isSigningUp: !this.state.isSigningUp });
   }
 
   render() {
@@ -25,7 +25,7 @@ class Registration extends Component {
     return (
       <Dialog open className="Login">
         {body}
-        <Button onClick={this.switchSignUpState} variant="contained" type="signup" value={buttonText} data-test="signup" color="secondary" >
+        <Button onClick={this.switchSignUpState} variant="contained" type="signup" value={buttonText} data-test="signup" color="secondary">
           {buttonText}
         </Button>
       </Dialog>

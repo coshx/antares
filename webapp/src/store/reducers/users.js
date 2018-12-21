@@ -2,16 +2,16 @@ import { SIGN_IN_USER_BEGIN, SIGN_IN_USER_SUCCESS, SIGN_IN_USER_FAILURE } from '
 
 export const initialState = {
   loading: false,
-  error: null
+  error: null,
 };
 
-export const usersReducer = (state = initialState, action) => {
+const usersReducer = (state = initialState, action) => {
   switch (action.type) {
     case SIGN_IN_USER_BEGIN:
       return {
         ...state,
         loading: true,
-        error: null
+        error: null,
       };
 
     case SIGN_IN_USER_SUCCESS:
@@ -32,4 +32,4 @@ export const usersReducer = (state = initialState, action) => {
   }
 };
 
-export default usersReducer;
+export { usersReducer };

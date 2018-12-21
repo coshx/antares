@@ -1,4 +1,4 @@
 ; config.ini
 [DEFAULT]
-COOKIE_SECRET_KEY = '...'
-JWT_SECRET_KEY = '...'
+COOKIE_SECRET_KEY = '-mXh!R[?7ywt#!6EkgP@lgKf(z/@@F e5CEx3[qjjJ?(iV1#IE0N41SV#+wp(BGH'
+JWT_SECRET_KEY = 'Wjh&<>xt6L^-@=8HO<1Fvt$Oe6A3L8I}WDVldhBh-a9Ao$-|Pw/oPzb(Am|H~{m_'

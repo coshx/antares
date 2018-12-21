@@ -22,8 +22,9 @@ class RegistrationHandler(tornado.web.RequestHandler):
 
     def post(self):
         """Checks if user exists if not, creates new user."""
-        email = self.get_query_argument('email')
-        password = self.get_query_argument('password')
+        body = json.loads(self.request.body.decode('utf-8'))
+        email = body['email']
+        password = body['password']
         new_user = ""
         with DRIVER.session() as session:
             user_exists = session.write_transaction(
@@ -33,7 +34,7 @@ class RegistrationHandler(tornado.web.RequestHandler):
                 hashed_pw = hashpw(utf8_pw, gensalt()).decode('utf-8')
                 new_user = session.write_transaction(
                     create_user, email, hashed_pw)
-        if new_user != "":
+        if new_user:
             session_token = jwt.encode({'email': email},
                                        self.settings['jwt_secret'],
                                        algorithm='HS256')
@@ -64,10 +65,9 @@ class RegistrationHandler(tornado.web.RequestHandler):
         hashedpw_utf8 = hashed_pw.encode('utf-8')
         pw_utf8 = password.encode('utf-8')
         if not user:
-            error_message = """No user with that email and password
-                                combination exists!"""
+            error_message = "No user with that email and password " \
+                                "combination exists!"
         elif hashpw(pw_utf8, hashedpw_utf8) == hashedpw_utf8:
-            # do we check if a cookie exists? If so, what do we do? Overwrite?
             session_token = jwt.encode({'email': email},
                                        self.settings['jwt_secret'],
                                        algorithm='HS256')

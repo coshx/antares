@@ -30,7 +30,6 @@ def make_app():
     config.read('config.ini')
     cookie_secret = config['DEFAULT']['COOKIE_SECRET_KEY']
     jwt_secret = config['DEFAULT']['JWT_SECRET_KEY']
-    # import pdb; pdb.set_trace()
     return tornado.web.Application([
         (r"/", MainHandler),
         (r"/csv", CSVHandler),

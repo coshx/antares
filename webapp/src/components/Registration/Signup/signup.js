@@ -24,8 +24,10 @@ class SignUp extends Component {
         error: 'Passwords do not match!',
       });
     }
-    fetch(`http://localhost:8888/registration?email=${this.state.email}&password=${this.state.password}`, {
+    fetch(`http://localhost:8888/registration`, {
       method: 'POST',
+      body: JSON.stringify({email: this.state.email,
+                            password: this.state.password})
     }).then(res => res.json()).then((response) => {
       if (!response.error) {
         this.props.onAuthenticate(response.email, response.session_token);

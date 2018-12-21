@@ -12,7 +12,7 @@ Antares allows maintainters of AI systems to offer end-users explanations for cl
   1. Activate the virtualenv before developing using `pipenv shell`
   
 ##Secret Key setup
-Copy the `config.ini.example` file and create a `config.ini` file. Fill in the secret keys either by generating your own or asking an admin for one.
+Copy the `config.ini.example` file and create a `config.ini` file. These secrets are only valid for the dev environment.
 
 ## Setup Redis
 Ensure you have a version of Redis installed on your computer. You can find a guide on how to install [here](https://redis.io/topics/quickstart). If you are on OSX we recommend using homebrew, a guide can be found [here](https://medium.com/@petehouston/install-and-config-redis-on-mac-os-x-via-homebrew-eb8df9a4f298).

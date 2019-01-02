@@ -17,8 +17,14 @@ class CSVHandler(tornado.web.RequestHandler):
     """Handles all CRUD operations on CSVs."""
 
     # pylint: disable=W0221
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "x-requested-with, authorization")
+        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+
     def post(self):
         """Parses CSV to dataframe and stores decision tree to Neo4j."""
+        import pdb; pdb.set_trace()
         csv_data = self.request.files["csv"][0]
         data = pd.read_csv(
             StringIO(str(csv_data["body"], 'utf-8')))
@@ -30,6 +36,11 @@ class CSVHandler(tornado.web.RequestHandler):
         graphviz_lines = graphviz.split('\n')
         java_types = map_java_datatypes(train)
         create_graph(graphviz_lines, java_types)
+
+    def options(self):
+        # no body
+        self.set_status(204)
+        self.finish()
 
 
 def map_java_datatypes(df):  # pylint: disable=C0103

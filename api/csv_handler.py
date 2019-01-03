@@ -25,8 +25,7 @@ class CSVHandler(tornado.web.RequestHandler):
 
     def post(self):
         """Parses CSV to dataframe and stores decision tree to Neo4j."""
-        decoded_token = decode_jwt(self, self.settings['jwt_secret'])
-        if auth(decoded_token['email']):
+        if auth(self, self.settings['jwt_secret']):
             csv_data = self.request.files["csv"][0]
             data = pd.read_csv(
                 StringIO(str(csv_data["body"], 'utf-8')))
@@ -223,7 +222,7 @@ def check_if_relationship_exists(txn, parent_node_id, tree_id, relationship):
         return True
     return False
 
-def decode_jwt(handler, secret_key):
+def auth(handler, secret_key):
     token = handler.request.headers._dict['Authorization']
     if token:
         parts = token.split()
@@ -235,7 +234,12 @@ def decode_jwt(handler, secret_key):
             throw_authorization_error(handler)
 
         jwt_token = parts[1]
-        return jwt.decode(jwt_token, secret_key)
+        decoded_token =  jwt.decode(jwt_token, secret_key)
+        if user_exists(decoded_token['email']):
+            return True
+        else:
+            throw_authorization_error(handler)
+            return False
     else:
         throw_authorization_error(handler)
 
@@ -245,7 +249,7 @@ def throw_authorization_error(handler):
     handler.write("invalid header authorization")
     handler.finish()
 
-def auth(email):
+def user_exists(email):
     with DRIVER.session() as session:
         user = session.write_transaction(
         get_user, email)

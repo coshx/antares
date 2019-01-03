@@ -1,13 +1,14 @@
-import jwt
+"""JWT authenticator decorator for endpoints."""
 import json
+import jwt
 from user_actions import user_exists
 
 
 def jwt_auth(handler_function):
-    '''Authenticates JWT against User DB'''
+    """Authenticates JWT against User DB"""
 
     def _require_auth(self, *args, **kwargs):
-        token = self.request.headers._dict['Authorization']
+        token = self.request.headers.get_list('Authorization').pop()
         if token:
             parts = token.split()
             if parts[0].lower() != 'bearer':
@@ -29,7 +30,7 @@ def jwt_auth(handler_function):
 
 
 def throw_authorization_error(handler):
-    handler._transforms = []
+    """Responds to invalid request with error"""
     handler.set_status(401)
     handler.write("Invalid header authorization")
     handler.finish(json.dumps({

@@ -35,9 +35,9 @@ def make_app():
         (r"/csv", CSVHandler),
         (r"/tree/([^/]+)", TreeHandler),
         (r"/registration", RegistrationHandler)],
-        autoreload=True,
-        cookie_secret=cookie_secret,
-        jwt_secret=jwt_secret)
+                                   autoreload=True,
+                                   cookie_secret=cookie_secret,
+                                   jwt_secret=jwt_secret)
 
 
 if __name__ == "__main__":

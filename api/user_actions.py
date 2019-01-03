@@ -1,3 +1,4 @@
+"""Repeatable user actions involving Neo4J"""
 from neo4j.v1 import GraphDatabase
 
 DRIVER = GraphDatabase.driver(
@@ -28,10 +29,7 @@ def create_user(txn, email, password):
 
 
 def user_exists(email):
+    """Checks if user exists"""
     with DRIVER.session() as session:
-        user = session.write_transaction(
-            get_user, email)
-        if user:
-            return True
-        else:
-            return False
+        return bool(session.write_transaction(
+            get_user, email))

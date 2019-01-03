@@ -22,13 +22,6 @@ class MainHandler(BaseHandler):
 
     def get(self):
         self.write("Hello, worlds")
-        import pdb; pdb.set_trace()
-        if not self.get_secure_cookie("mycookie"):
-            self.set_secure_cookie("mycookie", "myvalue")
-            self.write("Your cookie was not set yet!")
-        else:
-            self.write("Your cookie was set!")
-
 
 
 def make_app():
@@ -42,9 +35,9 @@ def make_app():
         (r"/csv", CSVHandler),
         (r"/tree/([^/]+)", TreeHandler),
         (r"/registration", RegistrationHandler)],
-                                   autoreload=True,
-                                   cookie_secret=cookie_secret,
-                                   jwt_secret=jwt_secret)
+        autoreload=True,
+        cookie_secret=cookie_secret,
+        jwt_secret=jwt_secret)
 
 
 if __name__ == "__main__":

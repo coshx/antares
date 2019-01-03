@@ -8,7 +8,7 @@ import './uploadData.css';
 
 class UploadData extends Component {
   render() {
-    const {onDrop, token, isAuthenticated} = this.props
+    const { onDrop, token, isAuthenticated } = this.props;
     return (
       <div className="UploadData">
         { !isAuthenticated
@@ -33,25 +33,23 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  onDrop: (token) => {
-    return (acceptedFiles) => {
-      const uploadedFile = acceptedFiles[0];
-      dispatch({
-        type: uploadActions.UPLOAD,
-        file: uploadedFile,
-      });
-      const form = new FormData();
-      form.append('csv', uploadedFile);
-      console.log('TIME TO CALL THE API WITH THE FILE', form);
-      console.log("TOKEN", token);
-      fetch('http://localhost:8888/csv', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        method: 'POST',
-        body: form
-      });
-    }
+  onDrop: token => (acceptedFiles) => {
+    const uploadedFile = acceptedFiles[0];
+    dispatch({
+      type: uploadActions.UPLOAD,
+      file: uploadedFile,
+    });
+    const form = new FormData();
+    form.append('csv', uploadedFile);
+    console.log('TIME TO CALL THE API WITH THE FILE', form);
+    console.log('TOKEN', token);
+    fetch('http://localhost:8888/csv', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      method: 'POST',
+      body: form,
+    });
   },
 });
 

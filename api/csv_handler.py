@@ -1,6 +1,7 @@
 """Handles requests to build decision trees from a CSV."""
 from io import StringIO
 import uuid
+import jwt
 import pandas as pd
 import sklearn.tree
 from sklearn.model_selection import train_test_split
@@ -24,18 +25,21 @@ class CSVHandler(tornado.web.RequestHandler):
 
     def post(self):
         """Parses CSV to dataframe and stores decision tree to Neo4j."""
-        import pdb; pdb.set_trace()
-        csv_data = self.request.files["csv"][0]
-        data = pd.read_csv(
-            StringIO(str(csv_data["body"], 'utf-8')))
-        # pylint: disable=W0612
-        train, test = train_test_split(data, test_size=.6)
+        decoded_token = decode_jwt(self, self.settings['jwt_secret'])
+        if auth(decoded_token['email']):
+            csv_data = self.request.files["csv"][0]
+            data = pd.read_csv(
+                StringIO(str(csv_data["body"], 'utf-8')))
+            # pylint: disable=W0612
+            train, test = train_test_split(data, test_size=.6)
 
-        tree_model = create_tree_model(train)
-        graphviz = sklearn.tree.export_graphviz(tree_model)
-        graphviz_lines = graphviz.split('\n')
-        java_types = map_java_datatypes(train)
-        create_graph(graphviz_lines, java_types)
+            tree_model = create_tree_model(train)
+            graphviz = sklearn.tree.export_graphviz(tree_model)
+            graphviz_lines = graphviz.split('\n')
+            java_types = map_java_datatypes(train)
+            create_graph(graphviz_lines, java_types)
+        else:
+            throw_authorization_error(self)
 
     def options(self):
         # no body
@@ -218,3 +222,44 @@ def check_if_relationship_exists(txn, parent_node_id, tree_id, relationship):
     if result.value():
         return True
     return False
+
+def decode_jwt(handler, secret_key):
+    token = handler.request.headers._dict['Authorization']
+    if token:
+        parts = token.split()
+        if parts[0].lower() != 'bearer':
+            throw_authorization_error(handler)
+        elif len(parts) == 1:
+            throw_authorization_error(handler)
+        elif len(parts) > 2:
+            throw_authorization_error(handler)
+
+        jwt_token = parts[1]
+        return jwt.decode(jwt_token, secret_key)
+    else:
+        throw_authorization_error(handler)
+
+def throw_authorization_error(handler):
+    handler._transforms = []
+    handler.set_status(401)
+    handler.write("invalid header authorization")
+    handler.finish()
+
+def auth(email):
+    with DRIVER.session() as session:
+        user = session.write_transaction(
+        get_user, email)
+        if user:
+            return True
+        else:
+            return False
+
+def get_user(txn, email):
+    """Gets user node."""
+    query = """
+    MATCH (a:User)
+    WHERE a.email = "{email}"
+    RETURN a
+    """.format(email=email)
+    result = txn.run(query)
+    return result.value()

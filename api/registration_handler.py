@@ -38,7 +38,7 @@ class RegistrationHandler(tornado.web.RequestHandler):
             session_token = jwt.encode({'email': email},
                                        self.settings['jwt_secret'],
                                        algorithm='HS256')
-            self.set_secure_cookie("user", session_token)
+            #self.set_secure_cookie("user", session_token)
             self.write(json.dumps({
                 "email": email,
                 "session_token": session_token.decode('utf-8')
@@ -71,7 +71,7 @@ class RegistrationHandler(tornado.web.RequestHandler):
             session_token = jwt.encode({'email': email},
                                        self.settings['jwt_secret'],
                                        algorithm='HS256')
-            self.set_secure_cookie("user", session_token)
+            #self.set_secure_cookie("user", session_token)
             return self.finish(json.dumps({
                 "email": user[0].get("email"),
                 "session_token": session_token.decode('utf-8')

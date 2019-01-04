@@ -12,30 +12,35 @@ def jwt_auth(handler_function):
         if token:
             parts = token.split()
             if parts[0].lower() != 'bearer':
-                throw_authorization_error(self)
+                throw_authorization_error(self, "Invalid header authorization")
             elif len(parts) == 1:
-                throw_authorization_error(self)
+                throw_authorization_error(self, "Invalid header authorization")
             elif len(parts) > 2:
-                throw_authorization_error(self)
+                throw_authorization_error(self, "Invalid header authorization")
 
             jwt_token = parts[1]
-            decoded_token = jwt.decode(jwt_token, self.settings['jwt_secret'])
-            if user_exists(decoded_token['email']):
-                handler_function(self, *args, **kwargs)
-            else:
-                throw_authorization_error(self)
+            try:
+                decoded_token = jwt.decode(jwt_token, self.settings['jwt_secret'])
+                if user_exists(decoded_token['email']):
+                    handler_function(self, *args, **kwargs)
+                else:
+                    throw_authorization_error(self, "Invalid header authorization")
+
+            except jwt.exceptions.DecodeError as error:
+                error_msg = f'Invalid header authorization: {str(error)}'
+                throw_authorization_error(self, error_msg)
+
         else:
-            throw_authorization_error(self)
+            throw_authorization_error(self, "Invalid header authorization")
     return _require_auth
 
 
-def throw_authorization_error(handler):
+def throw_authorization_error(handler, error_msg):
     """Responds to invalid request with error"""
     handler.set_status(401)
-    handler.write("Invalid header authorization")
     handler.finish(json.dumps({
         'error': {
             'code': 401,
-            'message': "Invalid header authorization",
+            'message': error_msg,
         }
     }))

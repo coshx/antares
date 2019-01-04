@@ -1,8 +1,7 @@
 import * as ActionTypes from '../actionTypes/ActionTypes';
 
-export const authenticationAction = (email, token) => ({
+export const authenticationAction = (token) => ({
   type: ActionTypes.AUTHENTICATE,
-  email,
   token,
 });
 

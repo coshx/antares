@@ -27,7 +27,7 @@ class UploadData extends Component {
 }
 
 const mapStateToProps = state => ({
-  isAuthenticated: !!state.authenticationReducer.email,
+  isAuthenticated: !!state.authenticationReducer.token,
   token: state.authenticationReducer.token,
   pending: state.uploadReducer.pending,
 });

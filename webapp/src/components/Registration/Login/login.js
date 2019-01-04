@@ -24,7 +24,7 @@ class Login extends Component {
       method: 'GET',
     }).then(res => res.json()).then((response) => {
       if (!response.error) {
-        this.props.onAuthenticate(response.email, response.session_token);
+        this.props.onAuthenticate(response.session_token);
       } else {
         this.setState({ error: JSON.stringify(response.error.message) });
       }
@@ -73,8 +73,8 @@ class Login extends Component {
 }
 
 const mapDispatchToProps = dispatch => ({
-  onAuthenticate: (email, token) => {
-    dispatch(authenticationAction(email, token));
+  onAuthenticate: (token) => {
+    dispatch(authenticationAction(token));
   },
 });
 

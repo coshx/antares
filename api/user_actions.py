@@ -31,5 +31,5 @@ def create_user(txn, email, password):
 def user_exists(email):
     """Checks if user exists"""
     with DRIVER.session() as session:
-        return bool(session.write_transaction(
+        return bool(session.read_transaction(
             get_user, email))

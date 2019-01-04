@@ -37,7 +37,6 @@ class RegistrationHandler(tornado.web.RequestHandler):
                                                self.settings['jwt_secret'],
                                                algorithm='HS256')
                     self.write(json.dumps({
-                        "email": email,
                         "session_token": session_token.decode('utf-8')
                     }))
         else:
@@ -69,7 +68,6 @@ class RegistrationHandler(tornado.web.RequestHandler):
                                        self.settings['jwt_secret'],
                                        algorithm='HS256')
             return self.finish(json.dumps({
-                "email": user[0].get("email"),
                 "session_token": session_token.decode('utf-8')
             }))
         else:

@@ -4,6 +4,7 @@ import jwt
 import tornado.web
 from neo4j.v1 import GraphDatabase
 from bcrypt import hashpw, gensalt
+from user_actions import get_user, create_user, user_exists
 
 DRIVER = GraphDatabase.driver(
     "bolt://localhost:7687", auth=("neo4j", "password"))
@@ -25,24 +26,19 @@ class RegistrationHandler(tornado.web.RequestHandler):
         body = json.loads(self.request.body.decode('utf-8'))
         email = body['email']
         password = body['password']
-        new_user = ""
-        with DRIVER.session() as session:
-            user_exists = session.write_transaction(
-                get_user, email)
-            if not user_exists:
-                utf8_pw = password.encode('utf-8')
-                hashed_pw = hashpw(utf8_pw, gensalt()).decode('utf-8')
-                new_user = session.write_transaction(
-                    create_user, email, hashed_pw)
-        if new_user:
-            session_token = jwt.encode({'email': email},
-                                       self.settings['jwt_secret'],
-                                       algorithm='HS256')
-            self.set_secure_cookie("user", session_token)
-            self.write(json.dumps({
-                "email": email,
-                "session_token": session_token.decode('utf-8')
-            }))
+
+        if not user_exists(email):
+            utf8_pw = password.encode('utf-8')
+            hashed_pw = hashpw(utf8_pw, gensalt()).decode('utf-8')
+            with DRIVER.session() as session:
+                if session.write_transaction(
+                        create_user, email, hashed_pw):
+                    session_token = jwt.encode({'email': email},
+                                               self.settings['jwt_secret'],
+                                               algorithm='HS256')
+                    self.write(json.dumps({
+                        "session_token": session_token.decode('utf-8')
+                    }))
         else:
             self.set_status(400)
             self.finish(json.dumps({
@@ -66,14 +62,12 @@ class RegistrationHandler(tornado.web.RequestHandler):
         pw_utf8 = password.encode('utf-8')
         if not user:
             error_message = "No user with that email and password " \
-                                "combination exists!"
+                "combination exists!"
         elif hashpw(pw_utf8, hashedpw_utf8) == hashedpw_utf8:
             session_token = jwt.encode({'email': email},
                                        self.settings['jwt_secret'],
                                        algorithm='HS256')
-            self.set_secure_cookie("user", session_token)
             return self.finish(json.dumps({
-                "email": user[0].get("email"),
                 "session_token": session_token.decode('utf-8')
             }))
         else:
@@ -88,29 +82,6 @@ class RegistrationHandler(tornado.web.RequestHandler):
         }))
 
     def options(self):
-        # no body
-        self.set_status(204)
+        self.set_header("Allow", "POST, GET, OPTIONS")
+        self.set_status(200)
         self.finish()
-
-
-def get_user(txn, email):
-    """Gets user node."""
-    query = """
-    MATCH (a:User)
-    WHERE a.email = "{email}"
-    RETURN a
-    """.format(email=email)
-    result = txn.run(query)
-    return result.value()
-
-
-def create_user(txn, email, password):
-    """Creates a user node."""
-    query = """
-    MERGE (a:User {email: $email,
-                password: $password})
-    """
-    return txn.run(
-        query,
-        email=email,
-        password=password)

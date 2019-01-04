@@ -24,13 +24,15 @@ class SignUp extends Component {
         error: 'Passwords do not match!',
       });
     }
-    fetch(`http://localhost:8888/registration`, {
+    fetch('http://localhost:8888/registration', {
       method: 'POST',
-      body: JSON.stringify({email: this.state.email,
-                            password: this.state.password})
+      body: JSON.stringify({
+        email: this.state.email,
+        password: this.state.password,
+      }),
     }).then(res => res.json()).then((response) => {
       if (!response.error) {
-        this.props.onAuthenticate(response.email, response.session_token);
+        this.props.onAuthenticate(response.session_token);
       } else {
         this.setState({ error: JSON.stringify(response.error.message) });
       }
@@ -96,8 +98,8 @@ class SignUp extends Component {
 
 
 const mapDispatchToProps = dispatch => ({
-  onAuthenticate: (email, token) => {
-    dispatch(authenticationAction(email, token));
+  onAuthenticate: (token) => {
+    dispatch(authenticationAction(token));
   },
 });
 

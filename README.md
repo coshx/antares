@@ -11,7 +11,7 @@ Antares allows maintainters of AI systems to offer end-users explanations for cl
   1. Run `pipenv install` from the project's root.
   1. Activate the virtualenv before developing using `pipenv shell`
   
-##Secret Key setup
+## Secret Key setup
 Copy the `config.ini.example` file and create a `config.ini` file. These secrets are only valid for the dev environment.
 
 ## Setup Redis

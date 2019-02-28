@@ -10,7 +10,7 @@ from auth import jwt_auth
 
 
 DRIVER = GraphDatabase.driver(
-    "bolt://localhost:7687", auth=("neo4j", "password"))
+    "bolt://localhost:11001", auth=("neo4j", "password"))
 
 
 # pylint: disable=W0223
@@ -37,7 +37,8 @@ class CSVHandler(tornado.web.RequestHandler):
         graphviz = sklearn.tree.export_graphviz(tree_model)
         graphviz_lines = graphviz.split('\n')
         java_types = map_java_datatypes(train)
-        create_graph(graphviz_lines, java_types)
+        if self.settings['user_email']:
+            create_graph(graphviz_lines, java_types, self.settings['user_email'])
 
     def options(self):
         self.set_header("Allow", "POST, OPTIONS")
@@ -66,12 +67,12 @@ def create_tree_model(data):
     return clf
 
 
-def create_graph(data, java_types):
+def create_graph(data, java_types, user_email):
     """Writes decision tree to Neo4j using graphviz output."""
     tree_id = str(uuid.uuid4())
     for line in data:
         if line[0].isdigit() and "->" not in line:
-            parse_node(line, tree_id, java_types)
+            parse_node(line, tree_id, java_types, user_email)
         elif line[0].isdigit() and "->" in line:
             node_ids = [int(s) for s in line.split() if s.isdigit()]
             print(node_ids)
@@ -87,7 +88,7 @@ def create_graph(data, java_types):
                     new_relationship)
 
 
-def parse_node(line, tree_id, java_types):
+def parse_node(line, tree_id, java_types, user_email):
     """Parses all graphviz nodes."""
     node = line.split("\"")[1].split("\\n")
     node_id = int(line.split(" ")[0])
@@ -108,7 +109,7 @@ def parse_node(line, tree_id, java_types):
         if expression and node_id == 0:
             session.write_transaction(
                 create_root_node, node_id, tree_id, expression, gini, samples,
-                java_types, values)
+                java_types, values, user_email)
         elif expression:
             session.write_transaction(
                 create_rule_node, node_id, tree_id, expression, gini, samples,
@@ -161,11 +162,12 @@ def create_leaf_node(txn, identifier, tree_id, gini, samples, value):
 # pylint: disable=R0913
 def create_root_node(
         txn, identifier, tree_id, expression, gini, samples,
-        java_types, value):
+        java_types, value, user_email):
     """Creates the root node of a tree."""
     parameter_names = ','.join(java_types[0])
     parameter_types = ','.join(java_types[1])
     query = """
+    MATCH (u:User) WHERE u.email = $email
     MERGE (a:Rule:Root {identifier: $identifier,
                         tree_id: $tree_id,
                         expression: $expression,
@@ -173,11 +175,12 @@ def create_root_node(
                         samples: $samples,
                         parameter_names: $parameter_names,
                         parameter_types: $parameter_types,
-                        value: $value})
+                        value: $value})-[r:USER_TREE]-(u)
     """
     txn.run(
         query,
         identifier=identifier,
+        email=user_email,
         tree_id=tree_id,
         expression=expression,
         gini=gini,

@@ -24,6 +24,7 @@ def jwt_auth(handler_function):
                 jwt_secret = self.settings['jwt_secret']
                 decoded_token = jwt.decode(jwt_token, jwt_secret)
                 if user_exists(decoded_token['email']):
+                    self.settings['user_email'] = decoded_token['email']
                     handler_function(self, *args, **kwargs)
                 else:
                     throw_authorization_error(self, default_error_msg)

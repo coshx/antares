@@ -7,7 +7,7 @@ from bcrypt import hashpw, gensalt
 from user_actions import get_user, create_user, user_exists
 
 DRIVER = GraphDatabase.driver(
-    "bolt://localhost:7687", auth=("neo4j", "password"))
+    "bolt://localhost:11001", auth=("neo4j", "password"))
 
 # pylint: disable=W0223
 

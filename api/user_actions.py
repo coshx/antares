@@ -2,7 +2,7 @@
 from neo4j.v1 import GraphDatabase
 
 DRIVER = GraphDatabase.driver(
-    "bolt://localhost:7687", auth=("neo4j", "password"))
+    "bolt://localhost:11001", auth=("neo4j", "password"))
 
 
 def get_user(txn, email):
